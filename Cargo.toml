@@ -1,0 +1,18 @@
+[package]
+name = "ukiyo"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+doc = false
+name = "ukiyo"
+
+[build-dependencies]
+cfgrammar = "0.12"
+lrlex = "0.12"
+lrpar = "0.12"
+
+[dependencies]
+cfgrammar = "0.12"
+lrlex = "0.12"
+lrpar = "0.12"
