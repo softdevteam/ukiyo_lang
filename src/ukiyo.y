@@ -1,25 +1,25 @@
 %start prog
 %%
-prog -> Result<(), ()>: prog "SEMICOLON" statement {Ok()}
+prog -> Result<Vec<Statement>, ()>: prog "SEMICOLON" statement {Ok()}
      | statement {Ok()}
      ;
 
-statement -> Result<(), ()>: expression {Ok()}
+statement -> Result<Statement, ()>: expression {Ok()}
           | assigment {Ok()}
           ;
 
-assigment -> Result<assigment, ()>: "LET" "IDENTIFIER" "EQ" expression {Ok()};
+assigment -> Result<Expr, ()>: "LET" "IDENTIFIER" "EQ" expression {Ok()};
 
-expression -> Result<expression, ()>: variable
+expression -> Result<Expr, ()>: variable
            | binary_expression {Ok()}
            | literal {Ok()}
            ;
 
-variable -> Result<String, ()>: "IDENTIFIER" {Ok(Expr::Var)};
+variable -> Result<Expr::Var, ()>: "IDENTIFIER" {Ok(Expr::Var)};
 
-binary_expression -> Result<binary_expression, ()>: expression bin_op expression {Ok()};
+binary_expression -> Result<BinOp, ()>: expression bin_op expression {Ok()};
 
-bin_op -> Result<String, ()>: "PLUS" {Ok()}
+bin_op -> Result<Span, ()>: "PLUS" {Ok()}
        | "MINUS" {Ok()}
        | "LTEQ" {Ok()}
        | "GTEQ" {Ok()}
