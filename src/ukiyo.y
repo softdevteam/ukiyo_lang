@@ -1,9 +1,9 @@
 %start prog
 %%
 prog -> Result<Vec<Statement>, ()>: 
-     prog "SEMICOLON" statement { Ok() }
-     | statement { Ok() }
-     ;
+            prog "SEMICOLON" statement { Ok() }
+          | statement { Ok() }
+          ;
 
 statement -> Result<Statement, ()>: 
             expression { Ok() }
