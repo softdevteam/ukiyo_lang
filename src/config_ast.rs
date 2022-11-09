@@ -15,7 +15,16 @@ pub enum Expr {
         lhs: Box<Expr>,
         rhs: Box<Expr>,
     },
+    Number {
+        span: Span
+    },
+    Int {
+        span: Span,
+        is_negative: bool,
+        val: Span,
+    },
     Var(String),
+    VarLookUp(Span),
 }
 pub enum BinOp {
     Add,

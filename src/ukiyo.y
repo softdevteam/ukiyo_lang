@@ -1,37 +1,34 @@
 %start prog
-
 %%
-prog -> prog "SEMICOLON" statement
-     | statement
+prog -> Result<(), ()>: prog "SEMICOLON" statement {Ok()}
+     | statement {Ok()}
      ;
 
-statement -> expression
-          | assigment
+statement -> Result<(), ()>: expression {Ok()}
+          | assigment {Ok()}
           ;
 
+assigment -> Result<assigment, ()>: "LET" "IDENTIFIER" "EQ" expression {Ok()};
 
-assigment -> "LET" "IDENTIFIER" "EQ" expression;
-
-expression -> variable
-           | binary_expression
-           | literal
+expression -> Result<expression, ()>: variable
+           | binary_expression {Ok()}
+           | literal {Ok()}
            ;
 
-variable -> "IDENTIFIER";
+variable -> Result<String, ()>: "IDENTIFIER" {Ok(Expr::Var)};
 
-binary_expression -> expression bin_op expression;
+binary_expression -> Result<binary_expression, ()>: expression bin_op expression {Ok()};
 
-bin_op -> "PLUS"
-       | "MINUS"
-       | "LTEQ"
-       | "GTEQ"
-       | "LT"
-       | "GT"
-       | "EQEQ"
+bin_op -> Result<String, ()>: "PLUS" {Ok()}
+       | "MINUS" {Ok()}
+       | "LTEQ" {Ok()}
+       | "GTEQ" {Ok()}
+       | "LT"   {Ok()}
+       | "GT"   {Ok()}
+       | "EQEQ" {Ok()}
        ;
 
-literal -> "INT_LITERAL"
-        ;
+literal -> Result<Expr, ()>:  | "INT" { Ok(Expr::Int{ span: $span, is_negative: false, val: map_err($1)?.span() }) };
 
 %%
 pub struct Prog(Vec<statement>);
