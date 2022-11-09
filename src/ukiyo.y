@@ -14,16 +14,16 @@ assigment -> Result<Expr, ()>:
           "LET" "IDENTIFIER" "EQ" expression { Ok() };
 
 expression -> Result<Expr, ()>:
-            variable
-          | binary_expression { Ok() }
+            variable { Ok() }
+          // | binary_expression { Ok() }
           | literal { Ok() }
           ;
 
 variable -> Result<Expr::Var, ()>: 
            "IDENTIFIER" { Ok(Expr::Var) };
 
-binary_expression -> Result<BinOp, ()>: 
-           expression bin_op expression { Ok() };
+// binary_expression -> Result<BinOp, ()>: 
+//            expression bin_op expression { Ok() };
 
 bin_op -> Result<Span, ()>: 
           "PLUS"  { Ok() }
@@ -40,4 +40,4 @@ literal -> Result<Expr, ()>:
 %%
 
 pub struct Prog(Vec<statement>);
-use crate::config_ast::{Statement, Expr, BinOp};
+use crate::compiler::ast::{Statement, Expr, BinOp};

@@ -3,8 +3,8 @@ use std::io::{self, BufRead, Write};
 use lrlex::lrlex_mod;
 use lrpar::lrpar_mod;
 
-lrlex_mod!("calc.l");
-lrpar_mod!("calc.y");
+lrlex_mod!("ukiyo.l");
+lrpar_mod!("ukiyo.y");
 
 fn main() {
    
@@ -24,7 +24,7 @@ fn main() {
                 // Pass the lexer to the parser and lex and parse the input.
                 let (res, errs) = ukiyo_y::parse(&lexer);
                 for e in errs {
-                    println!("{}", e.pp(&lexer, &calc_y::token_epp));
+                    println!("{}", e.pp(&lexer, &ukiyo_y::token_epp));
                 }
                 match res {
                     Some(r) => println!("Result: {:?}", r),
