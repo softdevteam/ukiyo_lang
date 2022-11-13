@@ -1,3 +1,4 @@
+mod config_ast;
 use std::io::{self, BufRead, Write};
 
 use lrlex::lrlex_mod;
