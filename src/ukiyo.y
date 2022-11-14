@@ -22,8 +22,8 @@ expression -> Result<(), Box<dyn Error>>:
 variable -> Result<(), Box<dyn Error>>: 
            "IDENTIFIER" { Ok(()) };
 
-// binary_expression -> Result<BinOp, ()>: 
-//            expression bin_op expression { Ok() };
+binary_expression -> Result<(), Box<dyn Error>>: 
+           expression bin_op expression { Ok(()) };
 
 bin_op -> Result<(), Box<dyn Error>>: 
           "PLUS"  { Ok(()) }

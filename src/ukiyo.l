@@ -4,6 +4,8 @@
 [a-zA-Z_][a-zA-Z0-9_]*  "IDENTIFIER"
 
 let "LET"
+\( "LBRACK"
+\) "RBRACK"
 
 ;   "SEMICOLON"
 ,   "COMMA"
