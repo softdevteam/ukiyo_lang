@@ -6,7 +6,7 @@
 let "LET"
 \( "LBRACK"
 \) "RBRACK"
-
+'(?:\\\\|\\'|[^'])*' "STRING"
 ;   "SEMICOLON"
 ,   "COMMA"
 =   "EQ"

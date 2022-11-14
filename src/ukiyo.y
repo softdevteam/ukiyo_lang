@@ -14,16 +14,39 @@ assigment -> Result<(), Box<dyn Error>>:
           "LET" "IDENTIFIER" "EQ" expression { Ok(()) };
 
 expression -> Result<(), Box<dyn Error>>:
-            variable {Ok(()) }
-          // | binary_expression { Ok() }
+            unit {Ok(()) }
+          | binary_expression { Ok() }
           | literal { Ok(()) }
           ;
-
-variable -> Result<(), Box<dyn Error>>: 
-           "IDENTIFIER" { Ok(()) };
+unit -> Result<(), Box<dyn Error>>:
+        "IDENTIFIER" { $1 }
+      | literal { $1 }
+      | "LBRACK" expression "RBRACK" { $2 }
+      ;
+          
+literal -> Result<(), Box<dyn Error>>: 
+          "INT" { Ok (()) }
+        | "-" "INT"
+        | "STRING" { Ok(()) }
+        ;
 
 binary_expression -> Result<(), Box<dyn Error>>: 
-           expression bin_op expression { Ok(()) };
+                    expression bin_op binary_term { Ok(()) }
+                  | binary_term { $1 }
+                  ;
+
+binary_term -> Result<(), Box<dyn Error>>:
+               unit idlistOpt { Ok(()) };
+
+idlistOpt -> Result<(), Box<dyn Error>>:
+            Idlist { $1 }
+          | { Ok(()) }
+          ;
+
+Idlist -> Result<(), Box<dyn Error>>:
+          "IDENTIFIER" { $1 }
+        | Idlist "IDENTIFIER" { Ok(()) }
+        ;      
 
 bin_op -> Result<(), Box<dyn Error>>: 
           "PLUS"  { Ok(()) }
@@ -34,9 +57,6 @@ bin_op -> Result<(), Box<dyn Error>>:
         | "GT"    { Ok(()) }
         | "EQEQ"  { Ok(()) }
         ;
-
-literal -> Result<(), Box<dyn Error>>: 
-          "INT" { Ok (()) };
 %%
 
 pub struct Prog(Vec<Statement>);
