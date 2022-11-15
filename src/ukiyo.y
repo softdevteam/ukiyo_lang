@@ -6,12 +6,12 @@ prog -> Result<(), Box<dyn Error>>:
           ;
 
 statement -> Result<(), Box<dyn Error>>: 
-            expression { Ok(()) }
-          | assigment { Ok(()) }
+            expression { $1 }
+          | assigment { $1 }
           ;
 
 expression -> Result<(), Box<dyn Error>>:
-            unit binary_expression { Ok(()) }
+            unit { Ok(()) }
           | binary_expression { Ok(()) }
           ;
 
@@ -25,8 +25,8 @@ unit -> Result<(), Box<dyn Error>>:
       ;
           
 literal -> Result<(), Box<dyn Error>>: 
-          "INT" { Ok (()) }
-        | "-" "INT"
+          "INT" { Ok(()) }
+        | "MINUS" "INT" { Ok(()) }
         | "STRING" { Ok(()) }
         ;
 
@@ -38,7 +38,7 @@ binary_expression -> Result<(), Box<dyn Error>>:
 binary_term -> Result<(), Box<dyn Error>>:
                unit idlistOpt { Ok(()) };
 
-idlistOpt -> Result<Vec<Span>, ()>:
+idlistOpt -> Result<(), Box<dyn Error>>:
             idlist { $1 };
 
 idlist -> Result<(), Box<dyn Error>>:
@@ -59,6 +59,7 @@ bin_op -> Result<(), Box<dyn Error>>:
 
 pub struct Prog(Vec<Statement>);
 
-use lrpar::{Span};
 use crate::config_ast::{Statement};
 use std::error::Error;
+
+
