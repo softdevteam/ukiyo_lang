@@ -10,14 +10,14 @@ statement -> Result<(), Box<dyn Error>>:
           | assigment { Ok(()) }
           ;
 
+expression -> Result<(), Box<dyn Error>>:
+            unit binary_expression { Ok(()) }
+          | binary_expression { Ok(()) }
+          ;
+
 assigment -> Result<(), Box<dyn Error>>: 
           "LET" "IDENTIFIER" "EQ" expression { Ok(()) };
 
-expression -> Result<(), Box<dyn Error>>:
-            unit {Ok(()) }
-          | binary_expression { Ok() }
-          | literal { Ok(()) }
-          ;
 unit -> Result<(), Box<dyn Error>>:
         "IDENTIFIER" { $1 }
       | literal { $1 }
@@ -31,25 +31,23 @@ literal -> Result<(), Box<dyn Error>>:
         ;
 
 binary_expression -> Result<(), Box<dyn Error>>: 
-                    expression bin_op binary_term { Ok(()) }
+                    binary_expression bin_op binary_term { Ok(()) }
                   | binary_term { $1 }
                   ;
 
 binary_term -> Result<(), Box<dyn Error>>:
                unit idlistOpt { Ok(()) };
 
-idlistOpt -> Result<(), Box<dyn Error>>:
-            Idlist { $1 }
-          | { Ok(()) }
-          ;
+idlistOpt -> Result<Vec<Span>, ()>:
+            idlist { $1 };
 
-Idlist -> Result<(), Box<dyn Error>>:
+idlist -> Result<(), Box<dyn Error>>:
           "IDENTIFIER" { $1 }
-        | Idlist "IDENTIFIER" { Ok(()) }
+        | idlist "IDENTIFIER" { Ok(()) }
         ;      
 
 bin_op -> Result<(), Box<dyn Error>>: 
-          "PLUS"  { Ok(()) }
+           "PLUS"  { Ok(()) }
         | "MINUS" { Ok(()) }
         | "LTEQ"  { Ok(()) }
         | "GTEQ"  { Ok(()) }
@@ -61,6 +59,6 @@ bin_op -> Result<(), Box<dyn Error>>:
 
 pub struct Prog(Vec<Statement>);
 
-//use lrpar::{Span};
+use lrpar::{Span};
 use crate::config_ast::{Statement};
 use std::error::Error;

@@ -1,5 +1,4 @@
 %%
-
 [0-9]+ "INT"
 [a-zA-Z_][a-zA-Z0-9_]*  "IDENTIFIER"
 
