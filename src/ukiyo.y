@@ -61,5 +61,13 @@ pub struct Prog(Vec<Statement>);
 
 use crate::config_ast::{Statement};
 use std::error::Error;
+// use lrlex::DefaultLexeme;
+// use lrpar::Span;
 
+// type StorageT = u32;
 
+// fn map_err(r: Result<DefaultLexeme<StorageT>, DefaultLexeme<StorageT>>)
+//     -> Result<Span, ()>
+// {
+//     r.map(|x| x.span()).map_err(|_| ())
+// }
