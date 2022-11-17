@@ -1,11 +1,11 @@
 %start prog
 %%
-prog -> Result<Vec<Statement>, ()>: 
+prog -> Result<(), ()>: 
             prog "SEMICOLON" statement { flattenr($1, $3) }
-          | statement { Ok(vec![]) }
+          | statement { Ok(()) }
           ;
 
-statement -> Result<Statement, ()>: 
+statement -> Result<Expr, ()>: 
             expression { $1 }
           | assigment { $1 }
           ;
@@ -15,9 +15,9 @@ expression -> Result<Expr, ()>:
           | binary_expression { $1 }
           ;
 
-assigment -> Result<Statement, ()>: 
+assigment -> Result<Expr, ()>: 
           "LET" "IDENTIFIER" "EQ" expression {  
-            Ok(())
+            Ok(Expr::Assign { span: $span, id: map_err($2)?, expr: Box::new($4?)})
             };
 
 unit -> Result<Expr, ()>:
@@ -59,10 +59,10 @@ bin_op -> Result<Span, ()>:
         ;
 %%
 
-pub struct Prog(Vec<Statement>);
+pub struct Prog(Vec<Expr>);
 
-use crate::config_ast::{Statement, Expr};
-use std::error::Error;
+use crate::config_ast::{Expr};
+// use std::error::Error;
 use lrlex::DefaultLexeme;
 use lrpar::Span;
 
