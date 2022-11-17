@@ -4,8 +4,8 @@ use lrpar::Span;
 pub enum Statement {
     Assign {
         span: Span,
-        lhs: Box<Expr>,
-        rhs: Box<Expr>,
+        lhs: Box<Statement>,
+        rhs: Box<Statement>,
     },
     Expr,
 }
@@ -14,7 +14,7 @@ pub enum Expr {
     Literal(Span),
     BinaryOp {
         span: Span,
-        op: BinOp,
+        op: Span,
         lhs: Box<Expr>,
         rhs: Box<Expr>,
     },
@@ -23,21 +23,21 @@ pub enum Expr {
         is_negative: bool,
         val: Span,
     },
-    Var(String),
+    String(Span),
     VarLookup(Span),
 }
-#[derive(Debug)]
-pub enum BinOp {
-    PLUS,
-    MINUS,
-    LTEQ,
-    GTEQ,
-    LT,
-    GT,
-    EQEQ,
-    EQ,
-    COMMA,
-}
+// #[derive(Debug)]
+// pub enum BinOp {
+//     PLUS,
+//     MINUS,
+//     LTEQ,
+//     GTEQ,
+//     LT,
+//     GT,
+//     EQEQ,
+//     EQ,
+//     COMMA,
+// }
 
 // impl Expr {
 //     pub fn span(&self) -> Span {
