@@ -1,8 +1,8 @@
 %start prog
 %%
-prog -> Result<(), ()>: 
+prog -> Result<Vec<Expr>, ()>: 
             prog "SEMICOLON" statement { flattenr($1, $3) }
-          | statement { Ok(()) }
+          | statement { Ok(vec![]) }
           ;
 
 statement -> Result<Expr, ()>: 
