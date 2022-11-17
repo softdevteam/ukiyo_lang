@@ -1,6 +1,5 @@
 %%
 [0-9]+ "INT"
-[a-zA-Z_][a-zA-Z0-9_]*  "IDENTIFIER"
 
 let "LET"
 \( "LBRACK"
@@ -16,6 +15,7 @@ let "LET"
 >=  "GTEQ"
 <   "LT"
 >   "GT"
+[a-zA-Z_][a-zA-Z0-9_]*  "IDENTIFIER"
 
 [ \t\n\r]+              ;
 (//.*?$|/[*].*?[*]/)    ;

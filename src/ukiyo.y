@@ -1,29 +1,29 @@
 %start prog
 %%
 prog -> Result<Vec<Expr>, ()>: 
-            prog "SEMICOLON" statement { flattenr($1, $3) }
+            prog statement { flattenr($1, $3) }
           | statement { Ok(vec![]) }
           ;
 
 statement -> Result<Expr, ()>: 
-            expression { $1 }
-          | assigment { $1 }
+            binary_expression "SEMICOLON" { $1 }
+          | assigment  "SEMICOLON" { $1 }
           ;
 
-expression -> Result<Expr, ()>:
-            unit { $1 }
-          | binary_expression { $1 }
-          ;
+// expression -> Result<Expr, ()>:
+//           //  unit { $1 }
+//           binary_expression { $1 }
+//           ;
 
 assigment -> Result<Expr, ()>: 
-          "LET" "IDENTIFIER" "EQ" expression {  
+          "LET" "IDENTIFIER" "EQ" binary_expression {  
             Ok(Expr::Assign { span: $span, id: map_err($2)?, expr: Box::new($4?)})
             };
 
 unit -> Result<Expr, ()>:
         "IDENTIFIER" { Ok(Expr::VarLookup(map_err($1)?)) }
       | literal { $1 }
-      | "LBRACK" expression "RBRACK" { $2 }
+      | "LBRACK" binary_expression "RBRACK" { $2 }
       ;
           
 literal -> Result<Expr, ()>: 
@@ -38,7 +38,9 @@ binary_expression -> Result<Expr, ()>:
                   ;
 
 binary_term -> Result<Expr, ()>:
-               unit idlistOpt { Ok(Expr::BinaryTerm{ span: $span, receiver: Box::new($1?), ids: $2? }) };
+               //unit idlistOpt { Ok(Expr::BinaryTerm{ span: $span, receiver: Box::new($1?), ids: $2? }) };
+               unit
+               ;
 
 idlistOpt -> Result<Vec<Span>, ()>:
             idlist { $1 };
