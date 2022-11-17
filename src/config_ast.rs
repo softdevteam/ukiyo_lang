@@ -18,6 +18,11 @@ pub enum Expr {
         lhs: Box<Expr>,
         rhs: Box<Expr>,
     },
+    BinaryTerm {
+        span: Span,
+        receiver: Box<Expr>,
+        ids: Vec<Span>,
+    },
     Int {
         span: Span,
         is_negative: bool,

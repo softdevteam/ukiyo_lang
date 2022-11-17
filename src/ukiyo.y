@@ -37,8 +37,8 @@ binary_expression -> Result<Expr, ()>:
                   | binary_term { $1 }
                   ;
 
-binary_term -> Result<(), Box<dyn Error>>:
-               unit idlistOpt { Ok(()) };
+binary_term -> Result<Expr, ()>:
+               unit idlistOpt { Ok(Expr::BinaryTerm{ span: $span, receiver: Box::new($1?), ids: $2? }) };
 
 idlistOpt -> Result<Vec<Span>, ()>:
             idlist { $1 };
