@@ -1,7 +1,7 @@
 %start prog
 %%
 prog -> Result<Vec<Expr>, ()>: 
-            prog statement { flattenr($1, $3) }
+            prog statement { flattenr($1, $2) }
           | statement { Ok(vec![]) }
           ;
 
@@ -39,16 +39,16 @@ binary_expression -> Result<Expr, ()>:
 
 binary_term -> Result<Expr, ()>:
                //unit idlistOpt { Ok(Expr::BinaryTerm{ span: $span, receiver: Box::new($1?), ids: $2? }) };
-               unit
+               unit { $1 }
                ;
 
-idlistOpt -> Result<Vec<Span>, ()>:
-            idlist { $1 };
+// idlistOpt -> Result<Vec<Span>, ()>:
+//             idlist { $1 };
 
-idlist -> Result<Vec<Span>, ()>:
-          "IDENTIFIER" { Ok(vec![map_err($1)?]) }
-        | idlist "IDENTIFIER" { Ok(vec![]) }
-        ;      
+// idlist -> Result<Vec<Span>, ()>:
+//           "IDENTIFIER" { Ok(vec![map_err($1)?]) }
+//         | idlist "IDENTIFIER" { Ok(vec![]) }
+//         ;      
 
 bin_op -> Result<Span, ()>: 
            "PLUS"  { Ok(map_err($1)?) }
