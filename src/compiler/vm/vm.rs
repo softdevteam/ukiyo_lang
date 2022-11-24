@@ -1,4 +1,7 @@
 use crate::Node;
+use parse::Instr;
+use parse::Bytecode;
+use std::collections::HashMap;
 
 const STACKSIZE: usize = usize::max_value();
 
@@ -23,7 +26,7 @@ pub struct VM {
     bytecode: Bytecode,
     stack: [Node; STACK_SIZE],
     stack_ptr: usize,
-    locals: Vec<NativeType>,
+    locals: HashMap<String, NativeType>,
     name: String,
 }
 
@@ -40,17 +43,17 @@ impl VM {
 
     pub fn run(&mut self) {
         let mut ip = 0;
-        while ip < self.bytecode.instructions.len() {
+        while ip < self.bytecode.bytecode.len() {
             let instr_addr = ip;
             ip += 1;
 
-            match *&self.bytecode.instructions[instr_addr] {
+            match *&self.bytecode.bytecode[instr_addr] {
                 Instr::PushInt(ref x) => {
-                    let const_idx =self.bytecode.instructions[ip];
+                    let const_idx =self.bytecode.bytecode[ip];
                     self.push(self.bytecode.constants[NativeType::Int(const_idx)].clone());
                 }
                 Instr::PushStr(ref x) => {
-                    let const_idx =self.bytecode.instructions[ip];
+                    let const_idx =self.bytecode.bytecode[ip];
                     self.push(self.bytecode.constants[NativeType::Int(const_idx)].clone());
                 }
                 Instr::Pop => {
@@ -134,6 +137,14 @@ impl VM {
             assert_eq!(index, len);
             self.locals.push(value)
         }
+    } 
+}
+
+pub fn run(bytecode: Bytecode) -> String {
+    let mut vm = VM::new(bytecode);
+    let res = vm.run();
+    match res {
+        Some(ref x) => x.pretty(),
+        None => "".to_string(),
     }
-    
 }

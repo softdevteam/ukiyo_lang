@@ -10,11 +10,6 @@ statement -> Result<Expr, ()>:
           | assigment  "SEMICOLON" { $1 }
           ;
 
-// expression -> Result<Expr, ()>:
-//           //  unit { $1 }
-//           binary_expression { $1 }
-//           ;
-
 assigment -> Result<Expr, ()>: 
           "LET" "IDENTIFIER" "EQ" binary_expression {  
             Ok(Expr::Assign { span: $span, id: map_err($2)?, expr: Box::new($4?)})
@@ -38,18 +33,8 @@ binary_expression -> Result<Expr, ()>:
                   ;
 
 binary_term -> Result<Expr, ()>:
-               //unit idlistOpt { Ok(Expr::BinaryTerm{ span: $span, receiver: Box::new($1?), ids: $2? }) };
                unit { $1 }
                ;
-
-// idlistOpt -> Result<Vec<Span>, ()>:
-//             idlist { $1 };
-
-// idlist -> Result<Vec<Span>, ()>:
-//           "IDENTIFIER" { Ok(vec![map_err($1)?]) }
-//         | idlist "IDENTIFIER" { Ok(vec![]) }
-//         ;      
-
 bin_op -> Result<Span, ()>: 
            "PLUS"  { Ok(map_err($1)?) }
         | "MINUS" { Ok(map_err($1)?) }
