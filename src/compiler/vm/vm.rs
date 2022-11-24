@@ -33,6 +33,8 @@ impl VM {
             bytecode,
             stack: unsafe { std::mem::zeroed() },
             stack_ptr: 0,
+            locals: locals,
+            name: name,
         }
     }
 
