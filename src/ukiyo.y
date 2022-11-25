@@ -2,7 +2,7 @@
 %%
 prog -> Result<Vec<Expr>, ()>: 
             prog statement { flattenr($1, $2) }
-          | statement { Ok(vec![]) }
+          | statement { Ok(vec![$1?]) }
           ;
 
 statement -> Result<Expr, ()>: 

@@ -1,8 +1,9 @@
 mod config_ast;
 use std::io::{self, BufRead, Write};
-
 use lrlex::lrlex_mod;
 use lrpar::lrpar_mod;
+
+use crate::vm::vm::run;
 
 lrlex_mod!("ukiyo.l");
 lrpar_mod!("ukiyo.y");
@@ -28,7 +29,10 @@ fn main() {
                     println!("{}", e.pp(&lexer, &ukiyo_y::token_epp));
                 }
                 match res {
-                    Some(r) => println!("Result: {:?}", r),
+                    Some(r) => {
+                        //println!("Result: {:?}", r)
+                        run();
+                    },
                     _ => eprintln!("Unable to evaluate expression.")
                 }
             }
