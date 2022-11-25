@@ -119,7 +119,32 @@ fn gen_bytecode(parse_tree: &Node<u16>, grm: &YaccGrammar, input: &str) -> Bytec
 
     fn gen_benterm(node: &Node<u16>, ctx: &mut CompilerContext) {
         match *node {
-            
+            Node::Nonterm { ref nodes, ..} => {
+                for child in nodes.iter() {
+                    gen_exp(child, ctx)
+                }
+            }
+            Node::Nonterm { ref nodes, ..} => {
+                if ctx.get_name(node) == "literal" {
+                     let lit_type =  ctx.get_name(&nodes[0]);
+                        let lit_value = ctx.get_value(&nodes[0]);
+                        match lit_type.as_ref(){
+                            "INT" => {
+                                let int = lit_value.parse::<i32>().unwrap();
+                                ctx.gen_bc(Instr::PushInt(int))
+                            }
+                            "STRING" => {
+                                ctx.gen_bc(Instr::PushStr(lit_value))
+                            }
+                            _ => panic!("NotYetImplemented")
+                        };
+                }
+            }
+             Node::Term{..} => {
+                if ctx.get_name(node) == "IDENTIFIER" {
+                     ctx.gen_bc(Instr::LoadVar(&node[0]));
+                }
+            }
         }
     }
     //let_statement : "LET" "IDENTIFIER" "EQ" expression;
