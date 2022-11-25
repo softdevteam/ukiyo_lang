@@ -65,42 +65,6 @@ impl VM {
                         _ => panic!("Unknown types"),
                     }
                 }
-                Instr::Sub => {
-                     match (self.pop(), self.pop()) {
-                        (Node::Int(rhs), Node::Int(lhs)) => self.push(Node::Int(lhs - rhs)),
-                        _ => panic!("Unknown types"),
-                    }
-                }
-                Instr::Lteq => {
-                    match (self.pop(), self.pop()) {
-                        (NativeType::Int(rhs), NativeType::Int(lhs)) => self.push(NativeType::Int(lhs <= rhs)),
-                        _ => panic!("Unknown types"),
-                    }
-                }
-                Instr::Lt => {
-                    match (self.pop(), self.pop()) {
-                        (NativeType::Int(rhs), NativeType::Int(lhs)) => self.push(NativeType::Int(lhs < rhs)),
-                        _ => panic!("Unknown types"),
-                    }
-                }
-                Instr::Gteq => {
-                    match (self.pop(), self.pop()) {
-                        (NativeType::Int(rhs), NativeType::Int(lhs)) => self.push(NativeType::Int(lhs >= rhs)),
-                        _ => panic!("Unknown types"),
-                    }
-                }
-                Instr::Gt => {
-                    match (self.pop(), self.pop()) {
-                        (NativeType::Int(rhs), NativeType::Int(lhs)) => self.push(NativeType::Int(lhs > rhs)),
-                        _ => panic!("Unknown types"),
-                    }
-                }
-                Instr::Eqeq => {
-                    match (self.pop(), self.pop()) {
-                        (NativeType::Int(rhs), NativeType::Int(lhs)) => self.push(NativeType::Int(lhs == rhs)),
-                        _ => panic!("Unknown types"),
-                    }
-                }
                 Instr::LoadVar(index) => {
                     self.load_local(index);
                 }
