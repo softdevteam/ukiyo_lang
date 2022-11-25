@@ -3,7 +3,7 @@ use std::io::{self, BufRead, Write};
 use lrlex::lrlex_mod;
 use lrpar::lrpar_mod;
 
-use crate::vm::vm::run;
+mod vm;
 
 lrlex_mod!("ukiyo.l");
 lrpar_mod!("ukiyo.y");
@@ -31,7 +31,7 @@ fn main() {
                 match res {
                     Some(r) => {
                         //println!("Result: {:?}", r)
-                        run();
+                        vm::run();
                     },
                     _ => eprintln!("Unable to evaluate expression.")
                 }
