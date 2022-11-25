@@ -6,12 +6,6 @@ pub enum Instr {
     PushStr(String),
     Pop,
     Add,
-    Sub,
-    Lteq,
-    Gteq,
-    Lt,
-    Gt,
-    Eqeq,
     LoadVar(usize),
     StoreVar(usize),
 }
@@ -19,21 +13,18 @@ pub enum Instr {
 #[derive(Debug)]
 pub struct Bytecode {
     pub bytecode: Vec<Instr>,
-    pub constants: Vec<Node>,
 }
 
 impl Bytecode {
     fn new(ctx : CompilerContext) -> Bytecode {
         Bytecode {
             bytecode: ctx.bytecode,
-            constants: ctx.constants,
         }
     }
 }
 
 struct CompilerContext<'pt> {
     bytecode: Vec<Instr>,
-    constants: Vec<Node>,
 
     // Fields for convenience when building up the Bytecode struct
     grm:        &'pt YaccGrammar,
@@ -118,34 +109,7 @@ fn gen_bytecode(parse_tree: &Node<u16>, grm: &YaccGrammar, input: &str) -> Bytec
                     "binary_expression" => {
                         gen_exp(&nodes[0], ctx);
                         gen_exp(&nodes[2], ctx);
-                        let bin_op = &nodes[1];
-                        if let &Node::Nonterm{ref nodes, .. } = bin_op {
-                            let operator = &nodes[0];
-                            match ctx.get_name(operator).as_ref() {
-                                "PLUS"  => ctx.gen_bc(Instr::Add),
-                                "MINUS" => ctx.gen_bc(Instr::Sub),
-                                "LTEQ"  => ctx.gen_bc(Instr::Lteq),
-                                "GTEQ"  => ctx.gen_bc(Instr::Gteq),
-                                "LT"    => ctx.gen_bc(Instr::Lt),
-                                "GT"    => ctx.gen_bc(Instr::Gt),
-                                "EQEQ"  => ctx.gen_bc(Instr::Eqeq),
-                                _       => panic!("Unknown operator")
-                            };
-                        }
-                    }
-                    "literal" => {
-                        let lit_type =  ctx.get_name(&nodes[0]);
-                        let lit_value = ctx.get_value(&nodes[0]);
-                        match lit_type.as_ref(){
-                            "INT" => {
-                                let int = lit_value.parse::<i32>().unwrap();
-                                ctx.gen_bc(Instr::PushInt(int))
-                            }
-                            "STRING" => {
-                                ctx.gen_bc(Instr::PushStr(lit_value))
-                            }
-                            _ => panic!("NotYetImplemented")
-                        };
+                        ctx.gen_bc(Instr::Add)
                     }
                     _ => panic!("unknown expression")
                 }
