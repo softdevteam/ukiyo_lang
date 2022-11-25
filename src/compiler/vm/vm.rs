@@ -24,8 +24,7 @@ impl NativeType {
 
 pub struct VM {
     bytecode: Bytecode,
-    stack: [Node; STACK_SIZE],
-    stack_ptr: usize,
+    stack: Vec<NativeType>,
     locals: HashMap<String, NativeType>,
     name: String,
 }
@@ -34,8 +33,7 @@ impl VM {
     pub fn new(bytecode: Bytecode) -> Self{
         Self {
             bytecode,
-            stack: unsafe { std::mem::zeroed() },
-            stack_ptr: 0,
+            stack: Vec::new(),
             locals: locals,
             name: name,
         }
@@ -49,12 +47,10 @@ impl VM {
 
             match *&self.bytecode.bytecode[instr_addr] {
                 Instr::PushInt(ref x) => {
-                    let const_idx =self.bytecode.bytecode[ip];
-                    self.push(self.bytecode.constants[NativeType::Int(const_idx)].clone());
+                    self.push(NativeType::Int(x.clone()));
                 }
                 Instr::PushStr(ref x) => {
-                    let const_idx =self.bytecode.bytecode[ip];
-                    self.push(self.bytecode.constants[NativeType::Int(const_idx)].clone());
+                    self.push(NativeType::Str(x.clone()));
                 }
                 Instr::Pop => {
                     self.pop();
@@ -76,13 +72,11 @@ impl VM {
     }
 
     fn push(&mut self, obj: NativeType) {
-        self.stack[self.stack_ptr] = obj;
-        self.stack_ptr += 1;
+        self.stack.push(obj);
     }
 
     fn pop(&mut self) -> NativeType {
-        let node = self.stack[self.stack_ptr - 1].clone();
-        match node {
+        match self.stack.pop() {
             Some(x) => x,
             None => panic!("Popped from empty stack!"),
         }
