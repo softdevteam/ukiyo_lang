@@ -5,14 +5,44 @@ pub enum OpCode {
 
 pub type Ast = Vec<Expr>;
 
-fn compiler(ast: Ast) -> Vec<OpCode> {
+fn compiler(_ast: Ast) -> Vec<OpCode> {
   let mut bc: Vec<OpCode> = Vec::new();
-  // for node in ast {
-  //   bc.push(OpCode::Int(node));
-  // }
-  bc.push(OpCode::Int(2));
-  bc.push(OpCode::Int(3));
+  let evaluator = Eval::new();
+  for node in _ast {
+    let val = evaluator.eval(&node);
+    bc.push(OpCode::Int(val));
+  }
+  // bc.push(OpCode::Int(2));
+  // bc.push(OpCode::Int(3));
   bc
+}
+
+struct Eval;
+impl Eval {
+  fn new() -> Self {
+    Self
+  }
+  pub fn eval(&self, node: &Expr) -> i32 {
+    match node {
+      Expr::Int(val) => *val,
+      Expr::Assign { span, id, expr } => {
+        //todo
+        unimplemented!();
+      },
+      Expr::BinaryOp { span, op, lhs, rhs } => {
+        //todo
+        unimplemented!();
+      },
+      Expr::String(span) => {
+        //todo
+        unimplemented!();
+      },
+      Expr::VarLookup(span) => {
+        //todo
+        unimplemented!();
+      },
+  }
+}
 }
 
 fn vm(prog: Vec<OpCode>) {
