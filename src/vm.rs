@@ -5,41 +5,17 @@ pub enum OpCode {
 
 pub type Ast = Vec<Expr>;
 
-pub struct Bytecode {
-  pub bytecode: Vec<OpCode>,
+fn compiler(ast: Ast) -> Vec<OpCode> {
+  let mut bc: Vec<OpCode> = Vec::new();
+  // for node in ast {
+  //   bc.push(OpCode::Int(node));
+  // }
+  bc.push(OpCode::Int(2));
+  bc.push(OpCode::Int(3));
+  bc
 }
 
-impl Bytecode {
-  fn new() -> Self {
-    Self {
-          bytecode: Vec::new(),
-    }
-  }
-}
-struct Compiler {
-  bytecode: Bytecode,
-}
-
-impl Compiler(ast: Ast) -> Vec<OpCode> {
-  fn new() -> Self {
-    Self {
-      bytecode: Vec::new(),
-    }
-  }
-  fn gen_bc(&mut self , opcode: OpCode) -> usize {
-        self.bytecode.push(opcode);
-        self.bytecode.len() - 1
-  }
-
-  fn from_ast(ast: Ast) {
-    for node in ast {
-      println!("Compiling node {:?}", node);
-      gen_bc(&node);
-    }
-  }
-}
-
-fn VM(prog: Vec<OpCode>) {
+fn vm(prog: Vec<OpCode>) {
   let mut pc = 0;
   let mut stack = Vec::new();
   while pc < prog.len() {
@@ -50,7 +26,7 @@ fn VM(prog: Vec<OpCode>) {
   println!("{stack:?}");
 }
 
-// pub fn run() {
-//   let prog = compiler(ast);
-//   VM(prog);
-// }
+pub fn run(ast: Ast) {
+  let prog = compiler(ast);
+  vm(prog);
+}

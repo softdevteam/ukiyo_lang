@@ -29,10 +29,9 @@ fn main() {
                     println!("{}", e.pp(&lexer, &ukiyo_y::token_epp));
                 }
                 match res {
-                    Some(r) => {
+                    Some(Ok(r)) => {
                         //println!("Result: {:?}", r)
-                        let prog = vm::Compiler(r);
-                        vm::VM(prog);
+                        vm::run(r)
                     },
                     _ => eprintln!("Unable to evaluate expression.")
                 }
