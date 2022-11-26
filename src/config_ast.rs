@@ -2,7 +2,7 @@ use lrpar::Span;
 
 #[derive(Debug)]
 pub enum Expr {
-    // Literal(Span),
+    Literal(Span),
     Assign {
         span: Span,
         id: Span,
@@ -26,7 +26,7 @@ impl Expr {
     pub fn span(&self) -> Span {
         match self {
            Expr::Assign { span, .. } => *span,
-        //    Expr::Literal(span) => *span,
+           Expr::Literal(span) => *span,
            Expr::String(span) => *span,
            Expr::BinaryOp { span, .. } => *span,
            Expr::Int { span, .. } => *span,

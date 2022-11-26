@@ -31,7 +31,8 @@ fn main() {
                 match res {
                     Some(r) => {
                         //println!("Result: {:?}", r)
-                        vm::run();
+                        let prog = vm::Compiler(r);
+                        vm::VM(prog);
                     },
                     _ => eprintln!("Unable to evaluate expression.")
                 }
