@@ -1,4 +1,5 @@
 use crate::config_ast::{Expr};
+use std::convert::From;
 pub enum OpCode {
     Int(i32),
 }
@@ -24,20 +25,25 @@ impl Eval {
   }
   pub fn eval(&self, node: &Expr) -> i32 {
     match node {
-      Expr::Int(val) => *val,
-      Expr::Assign { span, id, expr } => {
+      Expr::Int(val) => {
+        // *val as i32,
+        let tmp: String = String::from(*val);
+        let rval: i32 = tmp.trim_end().parse().unwrap();
+        rval
+      }
+      Expr::Assign { .. } => {
         //todo
         unimplemented!();
       },
-      Expr::BinaryOp { span, op, lhs, rhs } => {
+      Expr::BinaryOp { .. } => {
         //todo
         unimplemented!();
       },
-      Expr::String(span) => {
+      Expr::String(..) => {
         //todo
         unimplemented!();
       },
-      Expr::VarLookup(span) => {
+      Expr::VarLookup(..) => {
         //todo
         unimplemented!();
       },
