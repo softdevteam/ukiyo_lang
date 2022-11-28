@@ -7,6 +7,10 @@ edition = "2021"
 doc = false
 name = "ukiyo"
 
+[lib]
+name="ukiyo"
+path="src/lib/mod.rs"
+
 [build-dependencies]
 cfgrammar = "0.12"
 lrlex = "0.12"
