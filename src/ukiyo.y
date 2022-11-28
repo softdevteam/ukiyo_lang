@@ -48,7 +48,7 @@ bin_op -> Result<Span, ()>:
 
 pub struct Prog(Vec<Expr>);
 
-use crate::config_ast::{Expr};
+use ukiyo::config_ast::{Expr};
 // use std::error::Error;
 use lrlex::DefaultLexeme;
 use lrpar::Span;

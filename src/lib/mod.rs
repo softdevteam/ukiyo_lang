@@ -1,2 +1,2 @@
-pub mod compiler;
+pub mod config_ast;
 pub mod vm;

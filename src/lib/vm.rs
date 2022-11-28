@@ -1,10 +1,8 @@
-use crate::compiler::{config_ast};
+use crate::config_ast;
 use lrlex::{DefaultLexeme};
 use lrpar::{NonStreamingLexer};
-
-use super::StorageT;
 pub enum OpCode {
-    Int(u32),
+    Int(i32),
 }
 
 pub type Ast = Vec<config_ast::Expr>;
@@ -14,7 +12,7 @@ fn compiler(_ast: Ast,  lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,)
   let evaluator = Eval::new();
   for node in _ast {
     let val = evaluator.eval(lexer, &node);
-    //bc.push(OpCode::Int(val));
+    bc.push(OpCode::Int(val));
   }
   // bc.push(OpCode::Int(2));
   // bc.push(OpCode::Int(3));
@@ -50,10 +48,6 @@ impl Eval {
       },
   }
 }
-}
-
-fn parse_int(s: &str) -> u32 {
-    s.parse().unwrap()
 }
 
 fn vm(prog: Vec<OpCode>) {

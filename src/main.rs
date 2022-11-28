@@ -1,11 +1,12 @@
 use std::io::{self, BufRead, Write};
 use lrlex::lrlex_mod;
 use lrpar::lrpar_mod;
-use lib::vm::{run};
 
 lrlex_mod!("ukiyo.l");
 lrpar_mod!("ukiyo.y");
 
+extern crate ukiyo;
+use ukiyo::vm::run;
 fn main() {
    
     let lexerdef = ukiyo_l::lexerdef();
@@ -29,7 +30,7 @@ fn main() {
                 match res {
                     Some(Ok(r)) => {
                         //println!("Result: {:?}", r)
-                        vm::run(r, &lexer)
+                        run(r, &lexer)
                     },
                     _ => eprintln!("Unable to evaluate expression.")
                 }
