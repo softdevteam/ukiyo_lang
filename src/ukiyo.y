@@ -45,9 +45,6 @@ bin_op -> Result<Span, ()>:
         | "EQEQ"  { Ok(map_err($1)?) }
         ;
 %%
-
-pub struct Prog(Vec<Expr>);
-
 use ukiyo::config_ast::{Expr};
 // use std::error::Error;
 use lrlex::DefaultLexeme;
