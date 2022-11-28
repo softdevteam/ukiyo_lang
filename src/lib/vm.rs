@@ -34,9 +34,12 @@ impl Eval {
         //todo
         unimplemented!();
       },
-      config_ast::Expr::BinaryOp { .. } => {
+      config_ast::Expr::BinaryOp { span: _, op: _, lhs, rhs } => {
         //todo
-        unimplemented!();
+        let lhs = self.eval(lexer, lhs);
+        let rhs = self.eval(lexer, rhs);
+        // let op = 
+        lhs+rhs
       },
       config_ast::Expr::String(..) => {
         //todo
