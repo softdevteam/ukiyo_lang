@@ -13,7 +13,7 @@ fn compiler(_ast: Ast,  lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,)
   let evaluator = Eval::new();
   for node in _ast {
     let val = evaluator.eval(lexer, &node);
-    //bc.push(OpCode::Int(val));
+    bc.push(OpCode::Int(val));
   }
   // bc.push(OpCode::Int(2));
   // bc.push(OpCode::Int(3));
