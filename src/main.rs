@@ -1,9 +1,7 @@
-mod config_ast;
 use std::io::{self, BufRead, Write};
 use lrlex::lrlex_mod;
 use lrpar::lrpar_mod;
-
-mod vm;
+use lib::vm::{run};
 
 lrlex_mod!("ukiyo.l");
 lrpar_mod!("ukiyo.y");
@@ -31,7 +29,7 @@ fn main() {
                 match res {
                     Some(Ok(r)) => {
                         //println!("Result: {:?}", r)
-                        vm::run(r)
+                        vm::run(r, &lexer)
                     },
                     _ => eprintln!("Unable to evaluate expression.")
                 }
