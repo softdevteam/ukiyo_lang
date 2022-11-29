@@ -13,18 +13,22 @@ pub enum Expr {
         lhs: Box<Expr>,
         rhs: Box<Expr>,
     },
-    Int(Span),
+    Int {
+        span: Span,
+        is_negative: bool,
+        val: Span,
+    },
     String(Span),
     VarLookup(Span),
 }
 impl Expr {
     pub fn span(&self) -> Span {
         match self {
-           Expr::Assign { span, .. } => *span,
-           Expr::String(span) => *span,
-           Expr::BinaryOp { span, .. } => *span,
-           Expr::Int (span) => *span,
-           Expr::VarLookup(span) => *span,
+            Expr::Assign { span, .. } => *span,
+            Expr::String(span) => *span,
+            Expr::BinaryOp { span, .. } => *span,
+            Expr::Int { span, .. } => *span,
+            Expr::VarLookup(span) => *span,
         }
     }
 }

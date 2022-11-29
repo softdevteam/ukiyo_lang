@@ -22,8 +22,8 @@ unit -> Result<Expr, ()>:
       ;
           
 literal -> Result<Expr, ()>: 
-          "INT" { Ok(Expr::Int(map_err($1)?)) }
-        //| "MINUS" "INT" { Ok(Expr::Int{ span: $span, is_negative: true, val: map_err($2)? }) }
+          "INT" { Ok(Expr::Int{ span: $span, is_negative: false, val: map_err($1)? }) }
+        | "MINUS" "INT" { Ok(Expr::Int{ span: $span, is_negative: true, val: map_err($2)? }) }
         | "STRING" { Ok(Expr::String(map_err($1)?)) }
         ;
 

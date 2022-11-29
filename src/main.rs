@@ -1,4 +1,4 @@
-use std::io::{self, BufRead, Write};
+use std::io::{ self, BufRead, Write };
 use lrlex::lrlex_mod;
 use lrpar::lrpar_mod;
 
@@ -8,7 +8,6 @@ lrpar_mod!("ukiyo.y");
 extern crate ukiyo;
 use ukiyo::vm::run;
 fn main() {
-   
     let lexerdef = ukiyo_l::lexerdef();
     let stdin = io::stdin();
     loop {
@@ -30,12 +29,14 @@ fn main() {
                 match res {
                     Some(Ok(r)) => {
                         //println!("Result: {:?}", r)
-                        run(r, &lexer)
-                    },
-                    _ => eprintln!("Unable to evaluate expression.")
+                        run(r, &lexer);
+                    }
+                    _ => eprintln!("Unable to evaluate expression."),
                 }
             }
-            _ => break
+            _ => {
+                break;
+            }
         }
     }
 }
