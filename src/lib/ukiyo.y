@@ -45,7 +45,7 @@ bin_op -> Result<Span, ()>:
         | "EQEQ"  { Ok(map_err($1)?) }
         ;
 %%
-use ukiyo::config_ast::{Expr};
+use crate::config_ast::{Expr};
 // use std::error::Error;
 use lrlex::DefaultLexeme;
 use lrpar::Span;
