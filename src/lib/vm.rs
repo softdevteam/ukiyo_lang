@@ -11,6 +11,7 @@ pub enum OpCode {
     StoreVar(usize),
     LoadVar(usize),
     Plus,
+    Minus,
 }
 
 pub type Ast = Vec<config_ast::Expr>;
@@ -67,7 +68,13 @@ fn compiler_expr(
                     res.push(OpCode::Plus);
                     res
                 }
-                //"-" => lhs - rhs,
+                "-" => {
+                    let mut res = Vec::new();
+                    res.extend(lhs);
+                    res.extend(rhs);
+                    res.push(OpCode::Minus);
+                    res
+                }
                 &_ => todo!(),
             }
         }
@@ -164,6 +171,12 @@ fn vm(prog: Vec<OpCode>) -> i32 {
                 stack.push(lhs + rhs);
                 pc += 1;
             }
+            OpCode::Minus => {
+                let rhs = stack.pop().unwrap();
+                let lhs = stack.pop().unwrap();
+                stack.push(lhs - rhs);
+                pc += 1;
+            }
         }
     }
     assert_eq!(stack.len(), 1);
@@ -192,5 +205,6 @@ mod test {
         assert_eq!(compile_and_run("2+3;"), 5);
         assert_eq!(compile_and_run("2+3+4;"), 9);
         assert_eq!(compile_and_run("2 + -3;"), -1);
+        assert_eq!(compile_and_run("2 - 3"), -1);
     }
 }
