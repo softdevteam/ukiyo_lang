@@ -1,10 +1,12 @@
-//use std::collections::HashMap;
+use std::collections::HashMap;
+use std::str::FromStr;
 
 use crate::config_ast;
 use lrlex::{ DefaultLexeme };
 use lrpar::{ NonStreamingLexer };
 
-#[derive(Debug)]
+pub type Ast = Vec<config_ast::Expr>;
+#[derive(Debug, Clone)]
 pub enum OpCode {
     Int(i32),
     Str(String),
@@ -14,23 +16,8 @@ pub enum OpCode {
     Minus,
 }
 
-pub type Ast = Vec<config_ast::Expr>;
-
-// pub struct Compiler<'a> {
-//     _ast: Ast,
-//     lexer: &'a dyn NonStreamingLexer<'a, DefaultLexeme<u32>, u32>,
-//     locals_stack: Vec<HashMap<String, usize>>,
-// }
-
-// impl<'a> Compiler<'a> {
-//     fn new(lexer: &'a dyn NonStreamingLexer<'a, DefaultLexeme<u32>, u32>, _ast: Ast) -> Compiler {
-//         Compiler { _ast: _ast, lexer: lexer, locals_stack: Vec::new() }
-//     }
-// }
-
 fn compiler(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> Vec<OpCode> {
-    let mut bc: Vec<OpCode> = Vec::new();
-    assert!(ast.len() == 1);
+    assert!(ast.len() >= 1);
     dbg!(compiler_expr(&ast[0], lexer))
 }
 
@@ -47,13 +34,14 @@ fn compiler_expr(
             vec![OpCode::Int(tmp)]
         }
         config_ast::Expr::Assign { span: _, id, expr } => {
-            //todo
-            // let res = self.eval(lexer, expr);
-            // let _id = lexer.span_str(*id);
+            let mut res = Vec::new();
+            let expr = compiler_expr(expr, lexer);
+            let idx = usize::from_str(lexer.span_str(*id)).unwrap_or(0);
 
-            // println!("{_id} is {res}");
-            // res;
-            todo!();
+            let val = compiler_expr(expr, lexer);
+            res.extend(val);
+            res.push(OpCode::StoreVar(idx));
+            res
         }
         config_ast::Expr::BinaryOp { span: _, op, lhs, rhs } => {
             //todo
@@ -82,66 +70,11 @@ fn compiler_expr(
             //todo
             unimplemented!();
         }
-        config_ast::Expr::VarLookup(..) => {
-            //todo
-            unimplemented!();
-        }
-    }
-
-    // for node in ast {
-    //     let val = evaluator.eval(lexer, &node);
-    //     bc.push(OpCode::Int(val));
-    // }
-}
-
-struct Eval;
-impl Eval {
-    fn new() -> Self {
-        Self
-    }
-    pub fn eval(
-        &self,
-        lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,
-        node: &config_ast::Expr
-        //locals: Vec<HashMap<String, usize>>
-        //ctx: &mut Compiler
-    ) -> i32 {
-        match node {
-            config_ast::Expr::Int { span: _, is_negative, val } => {
-                let mut tmp = lexer.span_str(*val).parse().unwrap();
-                if *is_negative {
-                    tmp = -1 * tmp;
-                }
-                tmp
-            }
-            config_ast::Expr::Assign { span: _, id, expr } => {
-                //todo
-                let res = self.eval(lexer, expr);
-                let _id = lexer.span_str(*id);
-
-                println!("{_id} is {res}");
-                res
-            }
-            config_ast::Expr::BinaryOp { span: _, op, lhs, rhs } => {
-                //todo
-                let lhs = self.eval(lexer, lhs);
-                let rhs = self.eval(lexer, rhs);
-                let _op = lexer.span_str(*op);
-                let res = match _op {
-                    "+" => lhs + rhs,
-                    "-" => lhs - rhs,
-                    &_ => todo!(),
-                };
-                res
-            }
-            config_ast::Expr::String(..) => {
-                //todo
-                unimplemented!()
-            }
-            config_ast::Expr::VarLookup(..) => {
-                //todo
-                unimplemented!();
-            }
+        config_ast::Expr::VarLookup(id) => {
+            let mut res = Vec::new();
+            let idx = usize::from_str(lexer.span_str(*id)).unwrap_or(0);
+            res.push(OpCode::LoadVar(idx));
+            res
         }
     }
 }
@@ -149,8 +82,11 @@ impl Eval {
 fn vm(prog: Vec<OpCode>) -> i32 {
     let mut pc = 0;
     let mut stack: Vec<i32> = Vec::new();
+    let mut locals: HashMap<usize, i32> = HashMap::new();
     while pc < prog.len() {
-        match *&prog[pc] {
+        let expr = &prog[pc];
+
+        match *expr {
             OpCode::Int(x) => {
                 stack.push(x);
                 pc += 1;
@@ -160,11 +96,16 @@ fn vm(prog: Vec<OpCode>) -> i32 {
                 // pc += 1;
                 todo!();
             }
-            OpCode::StoreVar(..) => {
-                // stack.push(OpCode::StoreVar(name));
-                // pc += 1;
+            OpCode::StoreVar(name) => {
+                let val = stack.pop().unwrap();
+                locals.insert(name, val);
+                pc += 1;
             }
-            OpCode::LoadVar(name) => {}
+            OpCode::LoadVar(name) => {
+                let val = locals.get(&name).unwrap();
+                stack.push(*val);
+                pc += 1;
+            }
             OpCode::Plus => {
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
@@ -179,11 +120,12 @@ fn vm(prog: Vec<OpCode>) -> i32 {
             }
         }
     }
-    assert_eq!(stack.len(), 1);
+    //assert_eq!(stack.len(), 1);
     stack[0]
 }
 
 pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> i32 {
+    //let mut locals = HashMap::new();
     let prog = compiler(ast, lexer);
     vm(prog)
 }
