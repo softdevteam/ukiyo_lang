@@ -190,13 +190,13 @@ mod test {
         let res = ukiyo_y::parse(&lexer).0.unwrap().unwrap();
         run(res, &lexer)
     }
-    //#[test]
-    // fn basic() {
-    //     assert_eq!(compile_and_run("2+3;"), 5);
-    //     assert_eq!(compile_and_run("2+3+4;"), 9);
-    //     assert_eq!(compile_and_run("2 + -3;"), -1);
-    //     assert_eq!(compile_and_run("2 - 3"), -1);
-    // }
+    #[test]
+    fn basic() {
+        assert_eq!(compile_and_run("2+3;"), 5);
+        assert_eq!(compile_and_run("2+3+4;"), 9);
+        assert_eq!(compile_and_run("2 + -3;"), -1);
+        assert_eq!(compile_and_run("2 - 3"), -1);
+    }
     #[test]
     fn test2() {
         assert_eq!(compile_and_run("let x = 1+2; let y = x+1;"), 4);
