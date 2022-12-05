@@ -129,6 +129,7 @@ fn vm(prog: Vec<OpCode>) -> Result<i32, String> {
                 println!("now in storevar val is: {}", val);
                 locals.insert(idx, val);
                 println!("idx is {} and locals[idx] is {}", idx, locals[idx]);
+                stack.push(val);
             }
             OpCode::LoadVar(idx) => {
                 let val = locals[idx - 1];
@@ -151,7 +152,7 @@ fn vm(prog: Vec<OpCode>) -> Result<i32, String> {
     let l = stack.len();
     println!("length of stack is: {l}");
     //assert_eq!(stack.len(), 1);
-    Ok(stack[0])
+    Ok(stack.pop().unwrap())
 }
 
 pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> i32 {
