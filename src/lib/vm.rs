@@ -58,7 +58,7 @@ fn compiler_expr(
             let idx_str = lexer.span_str(*id).to_string();
 
             let map_len = hash_map.len();
-            *hash_map.entry(idx_str).or_insert(map_len) = map_len;
+            let _ = *hash_map.entry(idx_str).or_insert(map_len);
             res.extend(val.clone());
             println!("here is val {:?}", val);
             println!("here is hash_map length is {}", map_len);
@@ -70,6 +70,7 @@ fn compiler_expr(
             let lhs = compiler_expr(lhs, lexer, hash_map);
             let rhs = compiler_expr(rhs, lexer, hash_map);
             let _op = lexer.span_str(*op);
+            println!("lhs is {:?} and rhs is {:?}", lhs, rhs);
             match _op {
                 "+" => {
                     let mut res = Vec::new();
@@ -97,9 +98,8 @@ fn compiler_expr(
         config_ast::Expr::VarLookup(id) => {
             let mut res = Vec::new();
             let idx_str = lexer.span_str(*id).to_string();
-            let map_len = hash_map.len();
-            hash_map.entry(idx_str).or_insert(map_len);
-            res.push(OpCode::LoadVar(map_len));
+            let index = hash_map.get(&idx_str).unwrap();
+            res.push(OpCode::LoadVar(*index));
             res
         }
     }
@@ -132,7 +132,7 @@ fn vm(prog: Vec<OpCode>) -> Result<i32, String> {
                 stack.push(val);
             }
             OpCode::LoadVar(idx) => {
-                let val = locals[idx - 1];
+                let val = locals[idx];
                 println!("now in loadvar val is: {}", val);
                 stack.push(val);
             }
@@ -199,6 +199,6 @@ mod test {
     }
     #[test]
     fn test2() {
-        assert_eq!(compile_and_run("let x = 1+2; let y = x+1;"), 4);
+        assert_eq!(compile_and_run("let x = 1+2; let y = x+1; let z = x + y;"), 7);
     }
 }
