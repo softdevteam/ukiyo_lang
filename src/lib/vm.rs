@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 
 use crate::config_ast;
 use lrlex::{ DefaultLexeme };
@@ -10,10 +9,10 @@ pub type Ast = Vec<config_ast::Expr>;
 pub enum OpCode {
     Int(i32),
     Str(String),
-    StoreVar(usize),
-    LoadVar(usize),
     Plus,
     Minus,
+    StoreVar(usize),
+    LoadVar(usize),
 }
 
 fn compiler(
@@ -38,6 +37,7 @@ fn compiler_expr(
     node: &config_ast::Expr,
     lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>
 ) -> Vec<OpCode> {
+    let mut hash_map: HashMap<&str, usize> = HashMap::new();
     match node {
         config_ast::Expr::Int { span: _, is_negative, val } => {
             println!("entering Expr::Int");
@@ -53,12 +53,14 @@ fn compiler_expr(
             println!("entering assignment");
             let mut res = Vec::new();
             let val = compiler_expr(expr, lexer);
-            let idx = lexer.span_str(*id);
+            let idx_str = lexer.span_str(*id);
 
+            let map_len = hash_map.len();
+            hash_map.entry(idx_str).or_insert(map_len);
             res.extend(val.clone());
             println!("here is val {:?}", val);
-            println!("here is idx {}", idx);
-            //res.push(OpCode::StoreVar(idx));
+            println!("here is index {}", map_len);
+            res.push(OpCode::StoreVar(map_len));
             res
         }
         config_ast::Expr::BinaryOp { span: _, op, lhs, rhs } => {
@@ -92,8 +94,10 @@ fn compiler_expr(
         }
         config_ast::Expr::VarLookup(id) => {
             let mut res = Vec::new();
-            let idx = usize::from_str(lexer.span_str(*id)).unwrap_or(0);
-            res.push(OpCode::LoadVar(idx));
+            let idx_str = lexer.span_str(*id);
+            let map_len = hash_map.len();
+            hash_map.entry(idx_str).or_insert(map_len);
+            res.push(OpCode::LoadVar(map_len));
             res
         }
     }
@@ -105,48 +109,47 @@ fn vm(prog: Vec<OpCode>) -> Result<i32, String> {
     }
     let mut pc = 0;
     let mut stack: Vec<i32> = Vec::new();
-    let mut locals: HashMap<usize, i32> = HashMap::new();
+    let mut locals: Vec<i32> = Vec::new();
     while pc < prog.len() {
         let expr = &prog[pc];
 
         match *expr {
             OpCode::Int(x) => {
                 stack.push(x);
-                pc += 1;
             }
             OpCode::Str(..) => {
                 // stack.push(OpCode::Str(val.clone()));
                 // pc += 1;
                 todo!();
             }
-            OpCode::StoreVar(name) => {
-                let val = stack.pop().unwrap();
-                locals.insert(name, val);
-                pc += 1;
+            OpCode::StoreVar(idx) => {
+                let val = stack.pop().unwrap_or(0);
+                println!("now in storevar val is: {}", val);
+                locals.insert(idx, val);
+                println!("idx is {} and locals[idx] is {}", idx, locals[idx]);
             }
-            OpCode::LoadVar(name) => {
-                let val = locals.get(&name).unwrap();
-                stack.push(*val);
-                pc += 1;
+            OpCode::LoadVar(idx) => {
+                let val = locals[idx];
+                println!("now in loadvar val is: {}", val);
+                stack.push(val);
             }
             OpCode::Plus => {
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 stack.push(lhs + rhs);
-                pc += 1;
             }
             OpCode::Minus => {
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 stack.push(lhs - rhs);
-                pc += 1;
             }
         }
+        pc += 1;
     }
     let l = stack.len();
-    println!("here is e: {l}");
+    println!("length of stack is: {l}");
     //assert_eq!(stack.len(), 1);
-    Ok(stack.pop().unwrap())
+    Ok(stack[0])
 }
 
 pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> i32 {
@@ -193,6 +196,6 @@ mod test {
     // }
     #[test]
     fn test2() {
-        assert_eq!(compile_and_run("let x = 1+2"), 3);
+        assert_eq!(compile_and_run("let cool = 1+2; let y = cool + 1;"), 4);
     }
 }
