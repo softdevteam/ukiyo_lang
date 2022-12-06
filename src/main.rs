@@ -31,5 +31,5 @@ fn main() {
     //         }
     //     }
     // }
-    ukiyo::mainv2::main()
+    ukiyo::main()
 }

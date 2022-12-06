@@ -150,8 +150,12 @@ pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> 
 
 #[cfg(test)]
 mod test {
-    use crate::mainv2::ukiyo_l;
-    use crate::mainv2::ukiyo_y;
+    use lrlex::lrlex_mod;
+    use lrpar::lrpar_mod;
+
+    lrlex_mod!("lib/ukiyo.l");
+    lrpar_mod!("lib/ukiyo.y");
+
     use crate::vm::run;
 
     fn compile_and_run(input: &str) -> String {
