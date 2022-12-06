@@ -9,7 +9,7 @@ lrlex_mod!("lib/ukiyo.l");
 lrpar_mod!("lib/ukiyo.y");
 
 use crate::vm::run;
-pub fn main() {
+pub fn compile() {
     let lexerdef = ukiyo_l::lexerdef();
     let stdin = io::stdin();
     loop {
