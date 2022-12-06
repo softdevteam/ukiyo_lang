@@ -19,8 +19,6 @@ fn compiler(
     ast: Ast,
     lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>
 ) -> Result<Vec<OpCode>, String> {
-    // assert!(ast.len() >= 1);
-    // dbg!(compiler_expr(&ast[0], lexer))
     if ast.is_empty() {
         return Ok(Vec::new());
     }
@@ -42,7 +40,6 @@ fn compiler_expr(
 ) -> Vec<OpCode> {
     match node {
         config_ast::Expr::Int { span: _, is_negative, val } => {
-            println!("entering Expr::Int");
             let mut tmp = lexer.span_str(*val).parse().unwrap();
             let mut res = Vec::new();
             if *is_negative {
@@ -52,7 +49,6 @@ fn compiler_expr(
             res
         }
         config_ast::Expr::Assign { span: _, id, expr } => {
-            println!("entering assignment");
             let mut res = Vec::new();
             let val = compiler_expr(expr, lexer, hash_map);
             let idx_str = lexer.span_str(*id).to_string();
@@ -60,24 +56,19 @@ fn compiler_expr(
             let map_len = hash_map.len();
             let _ = *hash_map.entry(idx_str).or_insert(map_len);
             res.extend(val.clone());
-            println!("here is val {:?}", val);
-            println!("here is hash_map length is {}", map_len);
             res.push(OpCode::StoreVar(map_len));
             res
         }
         config_ast::Expr::BinaryOp { span: _, op, lhs, rhs } => {
-            println!("entering binary op");
             let lhs = compiler_expr(lhs, lexer, hash_map);
             let rhs = compiler_expr(rhs, lexer, hash_map);
             let _op = lexer.span_str(*op);
-            println!("lhs is {:?} and rhs is {:?}", lhs, rhs);
             match _op {
                 "+" => {
                     let mut res = Vec::new();
                     res.extend(lhs);
                     res.extend(rhs);
                     res.push(OpCode::Plus);
-                    println!("res is : {:?}", res);
                     return res;
                 }
                 "-" => {
@@ -85,7 +76,6 @@ fn compiler_expr(
                     res.extend(lhs);
                     res.extend(rhs);
                     res.push(OpCode::Minus);
-                    println!("res is : {:?}", res);
                     return res;
                 }
                 &_ => todo!(),
@@ -105,7 +95,7 @@ fn compiler_expr(
     }
 }
 
-fn vm(prog: Vec<OpCode>) -> Result<i32, String> {
+fn vm(prog: Vec<OpCode>) -> Result<Vec<i32>, String> {
     if prog.is_empty() {
         return Err("Cannot execute empty program".to_string());
     }
@@ -126,14 +116,11 @@ fn vm(prog: Vec<OpCode>) -> Result<i32, String> {
             }
             OpCode::StoreVar(idx) => {
                 let val = stack.pop().unwrap_or(0);
-                println!("now in storevar val is: {}", val);
                 locals.insert(idx, val);
-                println!("idx is {} and locals[idx] is {}", idx, locals[idx]);
                 stack.push(val);
             }
             OpCode::LoadVar(idx) => {
                 let val = locals[idx];
-                println!("now in loadvar val is: {}", val);
                 stack.push(val);
             }
             OpCode::Plus => {
@@ -149,33 +136,16 @@ fn vm(prog: Vec<OpCode>) -> Result<i32, String> {
         }
         pc += 1;
     }
-    let l = stack.len();
-    println!("length of stack is: {l}");
+    //let l = stack.len();
+    //println!("length of stack is: {l}");
     //assert_eq!(stack.len(), 1);
-    Ok(stack.pop().unwrap())
+    Ok(stack)
 }
 
-pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> i32 {
-    let prog = compiler(ast, lexer);
-
-    match prog {
-        Ok(prog_val) => {
-            let result = vm(prog_val);
-            match result {
-                Ok(result_val) => {
-                    return result_val;
-                }
-                Err(err) => {
-                    println!("error: {}", err);
-                    return 0;
-                }
-            }
-        }
-        Err(err) => {
-            println!("error: {}", err);
-            return 0;
-        }
-    }
+pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> Vec<i32> {
+    let prog = compiler(ast, lexer).unwrap();
+    let res = vm(prog).unwrap();
+    res
 }
 
 #[cfg(test)]
@@ -184,21 +154,26 @@ mod test {
     use crate::mainv2::ukiyo_y;
     use crate::vm::run;
 
-    fn compile_and_run(input: &str) -> i32 {
+    fn compile_and_run(input: &str) -> String {
         let lexerdef = ukiyo_l::lexerdef();
         let lexer = lexerdef.lexer(input);
         let res = ukiyo_y::parse(&lexer).0.unwrap().unwrap();
-        run(res, &lexer)
+        let output = run(res, &lexer);
+        let mut res_str = String::new();
+        for element in output.iter() {
+            res_str.push_str(&format!("[{}] ", element));
+        }
+        res_str.trim_end().to_string()
     }
     #[test]
     fn basic() {
-        assert_eq!(compile_and_run("2+3;"), 5);
-        assert_eq!(compile_and_run("2+3+4;"), 9);
-        assert_eq!(compile_and_run("2 + -3;"), -1);
-        assert_eq!(compile_and_run("2 - 3"), -1);
+        assert_eq!(compile_and_run("2+3;"), "[5]");
+        assert_eq!(compile_and_run("2+3+4;"), "[9]");
+        assert_eq!(compile_and_run("2 + -3;"), "[-1]");
+        assert_eq!(compile_and_run("2 - 3"), "[-1]");
     }
     #[test]
     fn test2() {
-        assert_eq!(compile_and_run("let x = 1+2; let y = x+1; let z = x + y;"), 7);
+        assert_eq!(compile_and_run("let x = 1+2; let y = x+1; let z = x + y;"), "[3] [4] [7]");
     }
 }

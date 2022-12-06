@@ -28,7 +28,10 @@ pub fn main() {
                 match res {
                     Some(Ok(r)) => {
                         //println!("Result: {:?}", r)
-                        run(r, &lexer);
+                        let output = run(r, &lexer);
+                        for element in output {
+                            print!("{} ", format!("[{}]", element));
+                        }
                     }
                     _ => eprintln!("Unable to evaluate expression."),
                 }
