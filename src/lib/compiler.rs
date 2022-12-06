@@ -5,11 +5,12 @@ use lrpar::{ NonStreamingLexer };
 pub type Ast = Vec<config_ast::Expr>;
 #[derive(Debug, Clone)]
 pub enum OpCode {
-    Int(i32),
-    Str(String),
+    PushInt(i32),
+    PushStr(String),
     Plus,
     Minus,
     Lteq,
+    Lt,
     StoreVar(usize),
     LoadVar(usize),
 }
@@ -44,7 +45,7 @@ fn compiler_expr(
             if *is_negative {
                 tmp = -1 * tmp;
             }
-            res.push(OpCode::Int(tmp));
+            res.push(OpCode::PushInt(tmp));
             res
         }
         config_ast::Expr::Assign { span: _, id, expr } => {
@@ -81,6 +82,13 @@ fn compiler_expr(
                     return res;
                 }
                 "<" => {
+                    let mut res = Vec::new();
+                    res.extend(lhs);
+                    res.extend(rhs);
+                    res.push(OpCode::Lt);
+                    return res;
+                }
+                "<=" => {
                     let mut res = Vec::new();
                     res.extend(lhs);
                     res.extend(rhs);

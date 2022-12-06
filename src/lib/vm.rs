@@ -1,57 +1,92 @@
 use crate::compiler::{ compiler, OpCode, Ast };
 use lrlex::{ DefaultLexeme };
 use lrpar::NonStreamingLexer;
+use std::fmt;
 
-// #[derive(Debug, Clone)]
-// pub enum Types {
-//     Int(i32),
-//     String(String),
-//     Bool(bool),
-// }
+#[derive(Debug, Clone)]
+pub enum Types {
+    Int(i32),
+    String(String),
+    Bool(bool),
+    NoneType,
+}
 
-fn vm(prog: Vec<OpCode>) -> Result<Vec<i32>, String> {
+impl Types {
+    fn pretty(&self) -> String {
+        match *self {
+            Types::Int(ref x) => x.to_string(),
+            Types::Bool(ref x) => x.to_string(),
+            Types::String(ref x) => x.to_string(),
+            Types::NoneType => "None".to_string(),
+        }
+    }
+}
+
+impl fmt::Display for Types {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.pretty())
+    }
+}
+
+fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
     if prog.is_empty() {
         return Err("Cannot execute empty program".to_string());
     }
     let mut pc = 0;
-    let mut stack: Vec<i32> = Vec::new();
-    let mut locals: Vec<i32> = Vec::new();
+    let mut stack: Vec<Types> = Vec::new();
+    let mut locals: Vec<Types> = Vec::new();
     while pc < prog.len() {
         let expr = &prog[pc];
 
         match *expr {
-            OpCode::Int(x) => {
-                stack.push(x);
+            OpCode::PushInt(ref x) => {
+                stack.push(Types::Int(x.clone()));
             }
-            OpCode::Str(..) => {
-                // stack.push(OpCode::Str(val.clone()));
+            OpCode::PushStr(ref x) => {
+                stack.push(Types::String(x.clone()));
                 // pc += 1;
                 todo!();
             }
             OpCode::StoreVar(idx) => {
-                let val = stack.pop().unwrap_or(0);
-                locals.insert(idx, val);
+                let val = stack.pop().unwrap();
+                locals.insert(idx, val.clone());
                 stack.push(val);
             }
             OpCode::LoadVar(idx) => {
-                let val = locals[idx];
+                let val = locals[idx].clone();
                 stack.push(val);
             }
             OpCode::Plus => {
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
-                stack.push(lhs + rhs);
+                match (lhs, rhs) {
+                    (Types::Int(x), Types::Int(y)) => stack.push(Types::Int(x + y)),
+                    _ => panic!("TypeError"),
+                }
             }
             OpCode::Minus => {
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
-                stack.push(lhs - rhs);
+                match (lhs, rhs) {
+                    (Types::Int(x), Types::Int(y)) => stack.push(Types::Int(x - y)),
+                    _ => panic!("TypeError"),
+                }
             }
             OpCode::Lteq => {
-                // let rhs = stack.pop().unwrap();
-                // let lhs = stack.pop().unwrap();
-                // stack.push(lhs < rhs);
-                todo!();
+                let rhs = stack.pop().unwrap();
+                let lhs = stack.pop().unwrap();
+                match (lhs, rhs) {
+                    (Types::Int(x), Types::Int(y)) => stack.push(Types::Bool(x <= y)),
+                    _ => panic!("TypeError"),
+                }
+            }
+            OpCode::Lt => {
+                let rhs = stack.pop().unwrap();
+                let lhs = stack.pop().unwrap();
+                match (lhs, rhs) {
+                    (Types::Int(x), Types::Int(y)) => stack.push(Types::Bool(x < y)),
+                    _ => panic!("TypeError"),
+                }
             }
         }
         pc += 1;
@@ -62,7 +97,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<i32>, String> {
     Ok(stack)
 }
 
-pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> Vec<i32> {
+pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> Vec<Types> {
     let prog = compiler(ast, lexer).unwrap();
     let res = vm(prog).unwrap();
     res
@@ -94,6 +129,7 @@ mod test {
         assert_eq!(compile_and_run("2+3+4;"), "[9]");
         assert_eq!(compile_and_run("2 + -3;"), "[-1]");
         assert_eq!(compile_and_run("2 - 3"), "[-1]");
+        assert_eq!(compile_and_run("2 <= 3"), "[true]");
     }
     #[test]
     fn test2() {
