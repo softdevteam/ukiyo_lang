@@ -2,6 +2,13 @@ use crate::compiler::{ compiler, OpCode, Ast };
 use lrlex::{ DefaultLexeme };
 use lrpar::NonStreamingLexer;
 
+// #[derive(Debug, Clone)]
+// pub enum Types {
+//     Int(i32),
+//     String(String),
+//     Bool(bool),
+// }
+
 fn vm(prog: Vec<OpCode>) -> Result<Vec<i32>, String> {
     if prog.is_empty() {
         return Err("Cannot execute empty program".to_string());
@@ -91,5 +98,6 @@ mod test {
     #[test]
     fn test2() {
         assert_eq!(compile_and_run("let x = 1+2; let y = x+1; let z = x + y;"), "[3] [4] [7]");
+        assert_eq!(compile_and_run("let x = 1; let x = 2; let y = x + 3"), "[1] [2] [5]");
     }
 }

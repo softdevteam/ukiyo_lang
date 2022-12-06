@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::config_ast;
 use lrlex::{ DefaultLexeme };
 use lrpar::{ NonStreamingLexer };
@@ -25,10 +23,10 @@ pub fn compiler(
     }
 
     let mut res = Vec::new();
-    let mut hash_map: HashMap<String, usize> = HashMap::new();
+    let mut locals: Vec<String> = Vec::new();
 
     for node in ast {
-        let val = compiler_expr(&node, lexer, &mut hash_map);
+        let val = compiler_expr(&node, lexer, &mut locals);
         res.extend(val);
     }
     Ok(res)
@@ -37,7 +35,7 @@ pub fn compiler(
 fn compiler_expr(
     node: &config_ast::Expr,
     lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,
-    hash_map: &mut HashMap<String, usize>
+    locals: &mut Vec<String>
 ) -> Vec<OpCode> {
     match node {
         config_ast::Expr::Int { span: _, is_negative, val } => {
@@ -51,18 +49,21 @@ fn compiler_expr(
         }
         config_ast::Expr::Assign { span: _, id, expr } => {
             let mut res = Vec::new();
-            let val = compiler_expr(expr, lexer, hash_map);
+            let val = compiler_expr(expr, lexer, locals);
             let idx_str = lexer.span_str(*id).to_string();
-
-            let map_len = hash_map.len();
-            let _ = *hash_map.entry(idx_str).or_insert(map_len);
             res.extend(val.clone());
-            res.push(OpCode::StoreVar(map_len));
+            match locals.iter().position(|x| x == &idx_str) {
+                Some(x) => res.push(OpCode::StoreVar(x)),
+                None => {
+                    locals.push(idx_str);
+                    res.push(OpCode::StoreVar(locals.len() - 1));
+                }
+            }
             res
         }
         config_ast::Expr::BinaryOp { span: _, op, lhs, rhs } => {
-            let lhs = compiler_expr(lhs, lexer, hash_map);
-            let rhs = compiler_expr(rhs, lexer, hash_map);
+            let lhs = compiler_expr(lhs, lexer, locals);
+            let rhs = compiler_expr(rhs, lexer, locals);
             let _op = lexer.span_str(*op);
             match _op {
                 "+" => {
@@ -96,8 +97,13 @@ fn compiler_expr(
         config_ast::Expr::VarLookup(id) => {
             let mut res = Vec::new();
             let idx_str = lexer.span_str(*id).to_string();
-            let index = hash_map.get(&idx_str).unwrap();
-            res.push(OpCode::LoadVar(*index));
+            let index = match locals.iter().position(|x| x == &idx_str) {
+                Some(x) => x,
+                None => {
+                    panic!("Variable doesn't exists");
+                }
+            };
+            res.push(OpCode::LoadVar(index));
             res
         }
     }
