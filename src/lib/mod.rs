@@ -1,5 +1,6 @@
 pub mod config_ast;
 pub mod vm;
+pub mod compiler;
 
 use std::io::{ self, BufRead, Write };
 use lrlex::lrlex_mod;
