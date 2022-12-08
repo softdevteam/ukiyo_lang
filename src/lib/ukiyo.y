@@ -8,7 +8,14 @@ prog -> Result<Vec<Expr>, ()>:
 statement -> Result<Expr, ()>: 
             binary_expression "SEMICOLON" { $1 }
           | assigment  "SEMICOLON" { $1 }
+          | print_statement "SEMICOLON" { $1 }
           ;
+
+print_statement -> Result<Expr, ()>: 
+          "PRINT" "LBRACK" binary_expression "RBRACK" {  
+            Ok(Expr::Print { span: $span, args: Box::new($3?)})
+          };
+      
 
 assigment -> Result<Expr, ()>: 
           "LET" "IDENTIFIER" "EQ" binary_expression {  

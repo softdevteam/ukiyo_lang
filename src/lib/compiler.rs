@@ -13,6 +13,7 @@ pub enum OpCode {
     Lt,
     StoreVar(usize),
     LoadVar(usize),
+    Call(String, Vec<OpCode>),
 }
 
 pub fn compiler(
@@ -52,6 +53,7 @@ fn compiler_expr(
             let mut res = Vec::new();
             let val = compiler_expr(expr, lexer, locals);
             let idx_str = lexer.span_str(*id).to_string();
+            println!("we now in assignment call for var: {}", idx_str);
             res.extend(val.clone());
             match locals.iter().position(|x| x == &idx_str) {
                 Some(x) => res.push(OpCode::StoreVar(x)),
@@ -60,6 +62,17 @@ fn compiler_expr(
                     res.push(OpCode::StoreVar(locals.len() - 1));
                 }
             }
+            res
+        }
+        config_ast::Expr::Print { span: _, args } => {
+            let mut res = Vec::new();
+            let label = "print".to_string();
+
+            let args = &*args;
+            let val = compiler_expr(&args, lexer, locals);
+            res.extend(val);
+
+            res.push(OpCode::Call(label, res.clone()));
             res
         }
         config_ast::Expr::BinaryOp { span: _, op, lhs, rhs } => {

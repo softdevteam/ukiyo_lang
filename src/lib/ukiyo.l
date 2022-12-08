@@ -2,6 +2,7 @@
 [0-9]+ "INT"
 
 let "LET"
+print "PRINT"
 \( "LBRACK"
 \) "RBRACK"
 '(?:\\\\|\\'|[^'])*' "STRING"

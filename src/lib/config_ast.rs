@@ -7,6 +7,10 @@ pub enum Expr {
         id: Span,
         expr: Box<Expr>,
     },
+    Print {
+        span: Span,
+        args: Box<Expr>,
+    },
     BinaryOp {
         span: Span,
         op: Span,
@@ -29,6 +33,7 @@ impl Expr {
             Expr::BinaryOp { span, .. } => *span,
             Expr::Int { span, .. } => *span,
             Expr::VarLookup(span) => *span,
+            Expr::Print { span, .. } => *span,
         }
     }
 }
