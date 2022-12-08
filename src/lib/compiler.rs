@@ -13,7 +13,7 @@ pub enum OpCode {
     Lt,
     StoreVar(usize),
     LoadVar(usize),
-    Call(String, Vec<OpCode>),
+    Call(String),
 }
 
 pub fn compiler(
@@ -49,13 +49,13 @@ fn compiler_expr(
             res.push(OpCode::PushInt(tmp));
             res
         }
-        //error when "let a = 1; let b = 2; let a = b + 3; print(b);"
+        //error when "let a = 1; let b = 2; let a = b + 3; print(b); <- prints 1 instead of 2"
         config_ast::Expr::Assign { span: _, id, expr } => {
             let mut res = Vec::new();
             let val = compiler_expr(expr, lexer, locals);
             let idx_str = lexer.span_str(*id).to_string();
             println!("we now in assignment call for var: {}", idx_str);
-            res.extend(val.clone());
+            res.extend(val);
             match locals.iter().position(|x| x == &idx_str) {
                 Some(x) => res.push(OpCode::StoreVar(x)),
                 None => {
@@ -73,7 +73,7 @@ fn compiler_expr(
             let val = compiler_expr(&args, lexer, locals);
             res.extend(val);
 
-            res.push(OpCode::Call(label, res.clone()));
+            res.push(OpCode::Call(label));
             res
         }
         config_ast::Expr::BinaryOp { span: _, op, lhs, rhs } => {

@@ -49,29 +49,31 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             }
             OpCode::StoreVar(idx) => {
                 let val = stack.pop().unwrap();
-                locals.insert(*idx, val.clone());
-                //stack.push(val);
+                let len = locals.len();
+                if *idx < len {
+                    locals[*idx] = val.clone();
+                } else {
+                    locals.push(val);
+                }
             }
             OpCode::LoadVar(idx) => {
                 println!("we now in loadvar");
                 let val = locals[*idx].clone();
                 stack.push(val);
             }
-            OpCode::Call(label, args) => {
+            OpCode::Call(label) => {
                 if label == "print" {
                     let mut output = String::new();
 
-                    for arg in args {
-                        let val = stack.pop().unwrap();
-                        let val_copy = val.to_owned();
-                        match val {
-                            Types::Int(x) => output.push_str(&x.to_string()),
-                            Types::Bool(x) => output.push_str(&x.to_string()),
-                            Types::String(x) => output.push_str(&x),
-                            Types::NoneType => output.push_str("None"),
-                        }
-                        stack.push(val_copy);
+                    let val = stack.pop().unwrap();
+                    let val_copy = val.to_owned();
+                    match val {
+                        Types::Int(x) => output.push_str(&x.to_string()),
+                        Types::Bool(x) => output.push_str(&x.to_string()),
+                        Types::String(x) => output.push_str(&x),
+                        Types::NoneType => output.push_str("None"),
                     }
+                    stack.push(val_copy);
 
                     println!("{}", output);
                 }
@@ -143,26 +145,21 @@ mod test {
         }
         res_str.trim_end().to_string()
     }
-    //#[test]
-    // fn basic() {
-    //     assert_eq!(compile_and_run("2+3;"), "[5]");
-    //     assert_eq!(compile_and_run("2+3+4;"), "[9]");
-    //     assert_eq!(compile_and_run("2 + -3;"), "[-1]");
-    //     assert_eq!(compile_and_run("2 - 3"), "[-1]");
-    //     assert_eq!(compile_and_run("2 <= 3"), "[true]");
-    // }
-    // #[test]
-    // fn test2() {
-    //     assert_eq!(compile_and_run("let x = 1+2; let y = x+1; let z = x + y;"), "[3] [4] [7]");
-    //     assert_eq!(compile_and_run("let x = 1; let x = 2; let y = x + 3"), "[1] [2] [5]");
-    // }
+    #[test]
+    fn basic() {
+        assert_eq!(compile_and_run("2+3;"), "[5]");
+        assert_eq!(compile_and_run("2+3+4;"), "[9]");
+        assert_eq!(compile_and_run("2 + -3;"), "[-1]");
+        assert_eq!(compile_and_run("2 - 3"), "[-1]");
+        assert_eq!(compile_and_run("2 <= 3"), "[true]");
+    }
     #[test]
     fn print_test() {
-        //assert_eq!(compile_and_run("let a = 1; let a = 2; let b = a + 3; print(b);"), "[5]");
-        assert_eq!(compile_and_run("let a = 1; let b = 2; print(b);"), "[2]");
-        // assert_eq!(
-        //     compile_and_run("let a = 1; let b = 2; let a = b + 3; print(a); print(b);"),
-        //     "[5] [2]"
-        // );
+        assert_eq!(compile_and_run("let a = 1; let a = 2; let b = a + 3; print(b);"), "[5]");
+        assert_eq!(compile_and_run("let a = 4; let b = 2; let a = b + 3; print(a);"), "[5]");
+        assert_eq!(
+            compile_and_run("let a = 1; let b = 2; let a = b + 3; print(a); print(b);"),
+            "[5] [2]"
+        );
     }
 }
