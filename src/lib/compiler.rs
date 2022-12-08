@@ -49,6 +49,7 @@ fn compiler_expr(
             res.push(OpCode::PushInt(tmp));
             res
         }
+        //error when "let a = 1; let b = 2; let a = b + 3; print(b);"
         config_ast::Expr::Assign { span: _, id, expr } => {
             let mut res = Vec::new();
             let val = compiler_expr(expr, lexer, locals);
