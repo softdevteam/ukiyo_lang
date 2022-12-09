@@ -11,6 +11,8 @@ pub enum OpCode {
     Minus,
     Lteq,
     Lt,
+    JumpStart(usize),
+    JumpEnd(usize),
     StoreVar(usize),
     LoadVar(usize),
     Call(String),
@@ -126,6 +128,17 @@ fn compiler_expr(
                 }
             };
             res.push(OpCode::LoadVar(index));
+            res
+        }
+        config_ast::Expr::While { span: _, condition, body } => {
+            let mut res = Vec::new();
+            let condition_instructions = compiler_expr(condition, lexer, locals);
+            let body_instructions = compiler_expr(body, lexer, locals);
+            let start_idx = res.len();
+            res.extend(condition_instructions.clone());
+            res.push(OpCode::JumpEnd(start_idx + condition_instructions.len() + 2));
+            res.extend(body_instructions);
+            res.push(OpCode::JumpStart(start_idx));
             res
         }
     }

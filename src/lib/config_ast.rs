@@ -1,6 +1,6 @@
 use lrpar::Span;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Assign {
         span: Span,
@@ -24,6 +24,11 @@ pub enum Expr {
     },
     String(Span),
     VarLookup(Span),
+    While {
+        span: Span,
+        condition: Box<Expr>,
+        body: Box<Expr>,
+    },
 }
 impl Expr {
     pub fn span(&self) -> Span {
@@ -34,6 +39,7 @@ impl Expr {
             Expr::Int { span, .. } => *span,
             Expr::VarLookup(span) => *span,
             Expr::Print { span, .. } => *span,
+            Expr::While { span, .. } => *span,
         }
     }
 }

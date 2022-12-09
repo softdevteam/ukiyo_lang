@@ -2,6 +2,7 @@
 %%
 prog -> Result<Vec<Expr>, ()>: 
             prog statement { flattenr($1, $2) }
+          | prog while_loop { flattenr($1, $2) }
           | statement { Ok(vec![$1?]) }
           ;
 
@@ -9,13 +10,18 @@ statement -> Result<Expr, ()>:
             binary_expression "SEMICOLON" { $1 }
           | assigment  "SEMICOLON" { $1 }
           | print_statement "SEMICOLON" { $1 }
+          | while_loop "SEMICOLON" { $1 }
           ;
 
 print_statement -> Result<Expr, ()>: 
           "PRINT" "LBRACK" binary_expression "RBRACK" {  
             Ok(Expr::Print { span: $span, args: Box::new($3?)})
           };
-      
+
+while_loop -> Result<Expr, ()>: 
+          "WHILE" "LBRACK" binary_expression "RBRACK" statement {  
+            Ok(Expr::While { span: $span, condition: Box::new($3?), body: Box::new($5?)})
+          };
 
 assigment -> Result<Expr, ()>: 
           "LET" "IDENTIFIER" "EQ" binary_expression {  

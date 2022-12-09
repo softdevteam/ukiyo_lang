@@ -110,6 +110,23 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     _ => panic!("TypeError"),
                 }
             }
+
+            OpCode::JumpStart(idx) => {
+                pc = *idx;
+                continue;
+            }
+
+            OpCode::JumpEnd(idx) => {
+                let top_val = stack.pop().unwrap();
+                match top_val {
+                    Types::Bool(false) => {
+                        pc = *idx;
+                        continue;
+                    }
+                    Types::Bool(true) => {}
+                    _ => panic!("TypeError"),
+                }
+            }
         }
         pc += 1;
     }
@@ -161,5 +178,15 @@ mod test {
             compile_and_run("let a = 1; let b = 2; let a = b + 3; print(a); print(b);"),
             "[5] [2]"
         );
+        assert_eq!(
+            compile_and_run(
+                "let a = 1; let a = 2; let b = a + 3; let z = a + b; print(z); print(b);"
+            ),
+            "[7] [5]"
+        );
+    }
+
+    fn while_loop_test() {
+        assert_eq!(compile_and_run("let a = 3; while(a) { print(a); a = a - 1; }"), "[3] [2] [1]")
     }
 }
