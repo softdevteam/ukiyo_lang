@@ -1,6 +1,6 @@
 %%
 [0-9]+ "INT"
-
+while "WHILE"
 let "LET"
 print "PRINT"
 
@@ -21,7 +21,6 @@ print "PRINT"
 >   "GT"
 [a-zA-Z_][a-zA-Z0-9_]*  "IDENTIFIER"
 [ \t\n\r]+              ;
-[ \t\n\r]+ while [ \t\n\r]+ "WHILE"
 
 [ \t\n\r]+              ;
 (//.*?$|/[*].*?[*]/)    ;

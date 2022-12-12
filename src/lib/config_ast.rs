@@ -2,6 +2,10 @@ use lrpar::Span;
 
 #[derive(Debug, Clone)]
 pub enum Expr {
+    Prog {
+        span: Span,
+        stmts: Vec<Expr>,
+    },
     Assign {
         span: Span,
         id: Span,
@@ -24,7 +28,7 @@ pub enum Expr {
     },
     String(Span),
     VarLookup(Span),
-    While {
+    WhileLoop {
         span: Span,
         condition: Box<Expr>,
         body: Box<Expr>,
@@ -39,7 +43,8 @@ impl Expr {
             Expr::Int { span, .. } => *span,
             Expr::VarLookup(span) => *span,
             Expr::Print { span, .. } => *span,
-            Expr::While { span, .. } => *span,
+            Expr::WhileLoop { span, .. } => *span,
+            Expr::Prog { span, .. } => *span,
         }
     }
 }

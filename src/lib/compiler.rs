@@ -11,11 +11,12 @@ pub enum OpCode {
     Minus,
     Lteq,
     Lt,
-    JumpStart(usize),
-    JumpEnd(usize),
     StoreVar(usize),
     LoadVar(usize),
     Call(String),
+    Jump(String),
+    JumpIfFalse(String),
+    Label(String),
 }
 
 pub fn compiler(
@@ -130,15 +131,31 @@ fn compiler_expr(
             res.push(OpCode::LoadVar(index));
             res
         }
-        config_ast::Expr::While { span: _, condition, body } => {
+        config_ast::Expr::WhileLoop { span: _, condition, body } => {
             let mut res = Vec::new();
-            let condition_instructions = compiler_expr(condition, lexer, locals);
-            let body_instructions = compiler_expr(body, lexer, locals);
-            let start_idx = res.len();
-            res.extend(condition_instructions.clone());
-            res.push(OpCode::JumpEnd(start_idx + condition_instructions.len() + 2));
-            res.extend(body_instructions);
-            res.push(OpCode::JumpStart(start_idx));
+            let condition_val = compiler_expr(condition, lexer, locals);
+            res.extend(condition_val);
+            let start_label = "while_loop_start".to_string();
+            res.push(OpCode::Label(start_label.clone()));
+
+            res.push(OpCode::JumpIfFalse("while_loop_end".to_string()));
+
+            let body_val = compiler_expr(body, lexer, locals);
+            res.extend(body_val);
+
+            res.push(OpCode::Jump(start_label.clone()));
+
+            let end_label = "while_loop_end".to_string();
+            res.push(OpCode::Label(end_label));
+            println!("inside while loop now, res is: {:?}", res);
+            res
+        }
+
+        config_ast::Expr::Prog { span: _, stmts } => {
+            let mut res = Vec::new();
+            for stmt in stmts {
+                res.extend(compiler_expr(stmt, lexer, locals));
+            }
             res
         }
     }

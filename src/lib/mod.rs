@@ -32,9 +32,9 @@ pub fn compile() {
                 match res {
                     Some(Ok(r)) => {
                         //println!("Result: {:?}", r)
-                        let output = run(r, &lexer);
+                        let output = run(r, &lexer).unwrap();
                         for element in output {
-                            print!("{} ", format!("[{}]", element));
+                            print!("{} ", element);
                         }
                     }
                     _ => eprintln!("Unable to evaluate expression."),
