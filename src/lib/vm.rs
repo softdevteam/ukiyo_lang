@@ -39,7 +39,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
         let expr = &prog[pc];
         match &*expr {
             OpCode::PushInt(ref x) => {
-                println!("in pushint {}", x);
+                //println!("in pushint {}", x);
                 stack.push(Types::Int(*x));
             }
             OpCode::PushStr(..) => {
@@ -47,7 +47,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 todo!();
             }
             OpCode::StoreVar(ref idx) => {
-                println!("in storeint");
+                //println!("in storeint");
                 //setting default values for val
 
                 // Use the default value with the unwrap_or_else() method
@@ -60,12 +60,12 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
             OpCode::LoadVar(ref idx) => {
-                println!("we now in loadvar");
+                //println!("we now in loadvar");
                 let val = locals[*idx].clone();
                 stack.push(val);
             }
             OpCode::Call(label) => {
-                println!("in call");
+                //println!("in call");
                 if label == "print" {
                     let mut output = String::new();
 
@@ -87,7 +87,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
             OpCode::Plus => {
-                println!("in plus");
+                //println!("in plus");
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 match (lhs, rhs) {
@@ -96,7 +96,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
             OpCode::Minus => {
-                println!("in minus");
+                //println!("in minus");
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 match (lhs, rhs) {
@@ -117,16 +117,16 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             }
 
             OpCode::Lt => {
-                println!("in LT");
+                //println!("in LT");
                 if let (Some(ref rhs), Some(ref lhs)) = (stack.pop(), stack.pop()) {
                     if let (Types::Int(lhs_val), Types::Int(rhs_val)) = (lhs, rhs) {
                         let res = Types::Bool(lhs_val < rhs_val);
-                        println!(
-                            "lhs {} is lt rhs {}, is true or false?: {}",
-                            lhs_val,
-                            rhs_val,
-                            res
-                        );
+                        // println!(
+                        //     "lhs {} is lt rhs {}, is true or false?: {}",
+                        //     lhs_val,
+                        //     rhs_val,
+                        //     res
+                        // );
                         stack.push(Types::Bool(lhs_val < rhs_val));
                     } else {
                         return Err("Cannot compare values of different types".to_string());
@@ -137,18 +137,18 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             }
 
             OpCode::Jump(pos) => {
-                println!("in jump");
+                //println!("in jump");
                 // Loop through the program and find the instruction with the specified label
                 pc = *pos;
             }
             OpCode::JumpIfFalse(pos) => {
-                println!("in jump if false");
+                //println!("in jump if false");
                 let val = match stack.pop() {
                     Some(x) => x,
                     None => panic!("Popped from empty stack!"),
                 };
                 if let Types::Bool(false) = val {
-                    println!("pos is {}", pos);
+                    //println!("pos is {}", pos);
                     pc = *pos;
                 }
             }
@@ -171,60 +171,56 @@ pub fn run(
     Ok(res)
 }
 
-// #[cfg(test)]
-// mod test {
-//     use lrlex::lrlex_mod;
-//     use lrpar::lrpar_mod;
-//     lrlex_mod!("lib/ukiyo.l");
-//     lrpar_mod!("lib/ukiyo.y");
+#[cfg(test)]
+mod test {
+    use lrlex::lrlex_mod;
+    use lrpar::lrpar_mod;
+    lrlex_mod!("lib/ukiyo.l");
+    lrpar_mod!("lib/ukiyo.y");
 
-//     use crate::vm::run;
+    use crate::vm::run;
 
-//     fn compile_and_run(input: &str) -> String {
-//         let lexerdef = ukiyo_l::lexerdef();
-//         let lexer = lexerdef.lexer(input);
-//         let res = ukiyo_y::parse(&lexer).0.unwrap().unwrap();
-//         let output = run(res, &lexer);
-//         let mut res_str = String::new();
-//         for element in output.iter() {
-//             res_str.push_str(&format!("[{}] ", element));
-//         }
-//         res_str.trim_end().to_string()
-//     }
-//     #[test]
-//     // fn basic() {
-//     //     assert_eq!(compile_and_run("2+3;"), "[5]");
-//     //     assert_eq!(compile_and_run("2+3+4;"), "[9]");
-//     //     assert_eq!(compile_and_run("2 + -3;"), "[-1]");
-//     //     assert_eq!(compile_and_run("2 - 3"), "[-1]");
-//     //     assert_eq!(compile_and_run("2 <= 3"), "[true]");
-//     // }
-//     // #[test]
-//     // fn print_test() {
-//     //     assert_eq!(compile_and_run("let a = 1; let a = 2; let b = a + 3; print(b);"), "[5]");
-//     //     assert_eq!(compile_and_run("let a = 4; let b = 2; let a = b + 3; print(a);"), "[5]");
-//     //     assert_eq!(
-//     //         compile_and_run("let a = 1; let b = 2; let a = b + 3; print(a); print(b);"),
-//     //         "[5] [2]"
-//     //     );
-//     //     assert_eq!(
-//     //         compile_and_run(
-//     //             "let a = 1; let a = 2; let b = a + 3; let z = a + b; print(z); print(b);"
-//     //         ),
-//     //         "[7] [5]"
-//     //     );
-//     // }
-//     fn while_loop_test() {
-//         assert_eq!(
-//             compile_and_run(
-//                 "let a = 1;
-//             let b = 3;
-//             while (a <= b) {
-//                 print(a);
-//                 a = a + 1;
-//             }"
-//             ),
-//             "[1] [2] [3]"
-//         )
-//     }
-// }
+    fn compile_and_run(input: &str) -> String {
+        let lexerdef = ukiyo_l::lexerdef();
+        let lexer = lexerdef.lexer(input);
+        let res = ukiyo_y::parse(&lexer).0.unwrap().unwrap();
+        let output = run(res, &lexer).unwrap();
+        let mut res_str = String::new();
+        for element in output.iter() {
+            res_str.push_str(&format!("[{}] ", element));
+        }
+        res_str.trim_end().to_string()
+    }
+    #[test]
+    // fn basic() {
+    //     assert_eq!(compile_and_run("2+3;"), "[5]");
+    //     assert_eq!(compile_and_run("2+3+4;"), "[9]");
+    //     assert_eq!(compile_and_run("2 + -3;"), "[-1]");
+    //     assert_eq!(compile_and_run("2 - 3"), "[-1]");
+    //     assert_eq!(compile_and_run("2 <= 3"), "[true]");
+    // }
+    // #[test]
+    // fn print_test() {
+    //     assert_eq!(compile_and_run("let a = 1; let a = 2; let b = a + 3; print(b);"), "[5]");
+    //     assert_eq!(compile_and_run("let a = 4; let b = 2; let a = b + 3; print(a);"), "[5]");
+    //     assert_eq!(
+    //         compile_and_run("let a = 1; let b = 2; let a = b + 3; print(a); print(b);"),
+    //         "[5] [2]"
+    //     );
+    //     assert_eq!(
+    //         compile_and_run(
+    //             "let a = 1; let a = 2; let b = a + 3; let z = a + b; print(z); print(b);"
+    //         ),
+    //         "[7] [5]"
+    //     );
+    // }
+    fn while_loop_test() {
+        assert_eq!(
+            compile_and_run(
+                "let z = 0; while (z < 1) {print(z); let z = z + 1; print(z); }
+            "
+            ),
+            "[0] [1]"
+        )
+    }
+}
