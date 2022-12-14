@@ -1,7 +1,8 @@
-use crate::config_ast::{ self, Expr };
+use crate::config_ast::{ self };
 use lrlex::{ DefaultLexeme };
 use lrpar::{ NonStreamingLexer };
 pub type Ast = Vec<config_ast::Expr>;
+const PLACEHOLDER: usize = usize::max_value();
 #[derive(Debug, Clone)]
 pub enum OpCode {
     PushInt(i32),
@@ -13,8 +14,8 @@ pub enum OpCode {
     StoreVar(usize),
     LoadVar(usize),
     Call(String),
-    Jump(String),
-    JumpIfFalse(String),
+    Jump(usize),
+    JumpIfFalse(usize),
     Label(String),
 }
 
@@ -41,6 +42,7 @@ fn compiler_expr(
     lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,
     locals: &mut Vec<String>
 ) -> Vec<OpCode> {
+    let mut i = 0; //for iterating in while loop
     match node {
         config_ast::Expr::Int { span: _, is_negative, val } => {
             let mut tmp = lexer.span_str(*val).parse().unwrap();
@@ -132,15 +134,13 @@ fn compiler_expr(
         }
         config_ast::Expr::WhileLoop { span: _, condition, body } => {
             let mut res = Vec::new();
+            let loop_entry = res.len();
+            //println!("loop_entry is {}", loop_entry);
             let condition_val = compiler_expr(&condition, lexer, locals);
             res.extend(condition_val);
-            let start_label = "while_loop_start".to_string();
-            res.push(OpCode::Label(start_label.clone()));
             //Problem with JumpIfFalse
             // Test case: let z = 0; while (z < 1) { z < 1; print(z); let z = z + 1; print(z); }
-            res.push(OpCode::JumpIfFalse("while_loop_end".to_string()));
-            //let body_expr = body.unwrap();
-            //let mut body_val = compiler_expr(body.unwrap(), lexer, locals);
+            res.push(OpCode::JumpIfFalse(PLACEHOLDER));
             let mut body_val = Vec::new();
             for stmt in body {
                 match stmt {
@@ -156,12 +156,13 @@ fn compiler_expr(
                 }
             }
             println!("printing body {:?}", body_val);
-            res.extend(body_val);
-
-            res.push(OpCode::Jump(start_label.clone()));
+            //res.extend(body_val);
+            //println!("at end of iteration {} loop enrty is {}", i, loop_entry);
+            res.push(OpCode::Jump(loop_entry));
 
             let end_label = "while_loop_end".to_string();
             res.push(OpCode::Label(end_label));
+            i = i + 1;
             //println!("inside while loop now, res is: {:?}", res);
             res
         }

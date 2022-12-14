@@ -35,15 +35,6 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
     let mut pc = 0;
     let mut stack: Vec<Types> = Vec::new();
     let mut locals: Vec<Types> = Vec::new();
-    let mut labels = HashMap::new();
-    for (i, opcode) in prog.iter().enumerate() {
-        match opcode {
-            OpCode::Label(label) => {
-                labels.insert(label, i);
-            }
-            _ => {}
-        }
-    }
     while pc < prog.len() {
         let expr = &prog[pc];
 
@@ -138,33 +129,16 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
 
-            OpCode::Jump(label) => {
+            OpCode::Jump(pos) => {
                 //println!("in jump");
                 // Loop through the program and find the instruction with the specified label
-                for (index, opcode) in prog.iter().enumerate() {
-                    if let OpCode::Label(label_str) = opcode {
-                        if *label_str == *label {
-                            // Set the program counter to the instruction with the specified label
-                            pc = index;
-                            break;
-                        }
-                    }
-                }
+                pc = *pos;
             }
-            OpCode::JumpIfFalse(label) => {
+            OpCode::JumpIfFalse(pos) => {
                 //println!("in jump if false");
-                // Pop the top value from the stack
                 let val = stack.pop().unwrap();
-                // If the value is false, jump to the instruction with the specified label
                 if let Types::Bool(false) = val {
-                    for (index, opcode) in prog.iter().enumerate() {
-                        if let OpCode::Label(label_str) = opcode {
-                            if *label_str == *label {
-                                pc = index;
-                                break;
-                            }
-                        }
-                    }
+                    pc = *pos;
                 }
             }
             OpCode::Label(label) => {
