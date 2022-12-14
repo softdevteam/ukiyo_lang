@@ -49,15 +49,15 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
 
         match &*expr {
             OpCode::PushInt(ref x) => {
-                println!("in pushint");
+                //println!("in pushint");
                 stack.push(Types::Int(x.clone()));
             }
             OpCode::PushStr(..) => {
                 //stack.push(Types::String(x.clone()));
                 todo!();
             }
-            OpCode::StoreVar(idx) => {
-                println!("in storeint");
+            OpCode::StoreVar(ref idx) => {
+                //println!("in storeint");
                 let val = stack.pop().unwrap();
                 let len = locals.len();
                 if *idx < len {
@@ -66,13 +66,13 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     locals.push(val);
                 }
             }
-            OpCode::LoadVar(idx) => {
-                println!("we now in loadvar");
+            OpCode::LoadVar(ref idx) => {
+                //println!("we now in loadvar");
                 let val = locals[*idx].clone();
                 stack.push(val);
             }
             OpCode::Call(label) => {
-                println!("in call");
+                //println!("in call");
                 if label == "print" {
                     let mut output = String::new();
 
@@ -94,7 +94,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
             OpCode::Plus => {
-                println!("in plus");
+                //println!("in plus");
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 match (lhs, rhs) {
@@ -103,7 +103,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
             OpCode::Minus => {
-                println!("in minus");
+                //println!("in minus");
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 match (lhs, rhs) {
@@ -139,7 +139,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             }
 
             OpCode::Jump(label) => {
-                println!("in jump");
+                //println!("in jump");
                 // Loop through the program and find the instruction with the specified label
                 for (index, opcode) in prog.iter().enumerate() {
                     if let OpCode::Label(label_str) = opcode {
@@ -152,7 +152,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
             OpCode::JumpIfFalse(label) => {
-                println!("in jump if false");
+                //println!("in jump if false");
                 // Pop the top value from the stack
                 let val = stack.pop().unwrap();
                 // If the value is false, jump to the instruction with the specified label
@@ -168,7 +168,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
             OpCode::Label(label) => {
-                println!("in label()");
+                //println!("in label()");
                 // Labels do not have any effect on the execution of the program,
                 // so they can be ignored when they are encountered
             }
