@@ -19,7 +19,7 @@ print_statement -> Result<Expr, ()>:
 
 while_loop -> Result<Expr, ()>:
               "WHILE" "LBRACK" binary_expression "RBRACK"  body {
-              Ok(Expr::WhileLoop { span: $span, condition: Box::new($3?), body: vec![$5?]})
+              Ok(Expr::WhileLoop { span: $span, condition: Box::new($3?), body: Box::new($5?)})
               };
               
 // condition -> Result<Expr, ()>:

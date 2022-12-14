@@ -1,7 +1,7 @@
 use crate::compiler::{ compiler, OpCode, Ast };
 use lrlex::{ DefaultLexeme };
 use lrpar::NonStreamingLexer;
-use std::{ fmt, collections::HashMap };
+use std::{ fmt };
 
 #[derive(Debug, Clone)]
 pub enum Types {
@@ -37,33 +37,35 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
     let mut locals: Vec<Types> = Vec::new();
     while pc < prog.len() {
         let expr = &prog[pc];
-
         match &*expr {
             OpCode::PushInt(ref x) => {
-                //println!("in pushint");
-                stack.push(Types::Int(x.clone()));
+                println!("in pushint {}", x);
+                stack.push(Types::Int(*x));
             }
             OpCode::PushStr(..) => {
                 //stack.push(Types::String(x.clone()));
                 todo!();
             }
             OpCode::StoreVar(ref idx) => {
-                //println!("in storeint");
-                let val = stack.pop().unwrap();
+                println!("in storeint");
+                //setting default values for val
+
+                // Use the default value with the unwrap_or_else() method
+                let val = stack.pop().unwrap_or_else(|| { Types::Int(0) });
                 let len = locals.len();
                 if *idx < len {
-                    locals[*idx] = val.clone();
+                    locals[*idx] = val;
                 } else {
                     locals.push(val);
                 }
             }
             OpCode::LoadVar(ref idx) => {
-                //println!("we now in loadvar");
+                println!("we now in loadvar");
                 let val = locals[*idx].clone();
                 stack.push(val);
             }
             OpCode::Call(label) => {
-                //println!("in call");
+                println!("in call");
                 if label == "print" {
                     let mut output = String::new();
 
@@ -85,7 +87,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
             OpCode::Plus => {
-                //println!("in plus");
+                println!("in plus");
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 match (lhs, rhs) {
@@ -94,7 +96,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
             }
             OpCode::Minus => {
-                //println!("in minus");
+                println!("in minus");
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 match (lhs, rhs) {
@@ -116,10 +118,15 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
 
             OpCode::Lt => {
                 println!("in LT");
-                if let (Some(rhs), Some(lhs)) = (stack.pop(), stack.pop()) {
+                if let (Some(ref rhs), Some(ref lhs)) = (stack.pop(), stack.pop()) {
                     if let (Types::Int(lhs_val), Types::Int(rhs_val)) = (lhs, rhs) {
                         let res = Types::Bool(lhs_val < rhs_val);
-                        println!("is true or false?: {}", res);
+                        println!(
+                            "lhs {} is lt rhs {}, is true or false?: {}",
+                            lhs_val,
+                            rhs_val,
+                            res
+                        );
                         stack.push(Types::Bool(lhs_val < rhs_val));
                     } else {
                         return Err("Cannot compare values of different types".to_string());
@@ -130,24 +137,23 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             }
 
             OpCode::Jump(pos) => {
-                //println!("in jump");
+                println!("in jump");
                 // Loop through the program and find the instruction with the specified label
                 pc = *pos;
             }
             OpCode::JumpIfFalse(pos) => {
-                //println!("in jump if false");
-                let val = stack.pop().unwrap();
+                println!("in jump if false");
+                let val = match stack.pop() {
+                    Some(x) => x,
+                    None => panic!("Popped from empty stack!"),
+                };
                 if let Types::Bool(false) = val {
+                    println!("pos is {}", pos);
                     pc = *pos;
                 }
             }
-            OpCode::Label(label) => {
-                //println!("in label()");
-                // Labels do not have any effect on the execution of the program,
-                // so they can be ignored when they are encountered
-            }
         }
-        pc += 1;
+        pc = pc.wrapping_add(1);
     }
     //let l = stack.len();
     //println!("length of stack is: {l}");

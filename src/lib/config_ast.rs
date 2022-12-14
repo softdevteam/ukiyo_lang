@@ -31,7 +31,7 @@ pub enum Expr {
     WhileLoop {
         span: Span,
         condition: Box<Expr>,
-        body: Vec<Expr>,
+        body: Box<Expr>,
     },
 }
 impl Expr {
