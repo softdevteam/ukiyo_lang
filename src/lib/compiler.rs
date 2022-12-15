@@ -138,7 +138,7 @@ fn compiler_expr(
             //getting and pushing the condition
             let cond = compiler_expr(condition, lexer, locals, bc);
             res.extend(cond);
-            println!("bytecode length is: {}", loop_entry);
+            //println!("bytecode length is: {}", loop_entry);
             //if condition fails then jump to offset MAXD
             res.push(OpCode::JumpIfFalse(MAXD));
             let exit_call = bc.len() + res.len() - 1;

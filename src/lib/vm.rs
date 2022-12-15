@@ -231,6 +231,13 @@ mod test {
             "
             ),
             "[0] [1]"
+        );
+        assert_eq!(
+            compile_and_run(
+                "let x = 0; let y = 5  while (x < y) {print(x); let x = x + 1; print(y); let y = y - x; }
+            "
+            ),
+            "[0] [5] [1] [4]"
         )
     }
 }
