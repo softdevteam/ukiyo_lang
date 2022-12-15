@@ -9,6 +9,7 @@ pub enum OpCode {
     PushStr(String),
     Plus,
     Minus,
+    Eqeq,
     Lteq,
     Lt,
     StoreVar(usize),
@@ -112,6 +113,13 @@ fn compiler_expr(
                     res.push(OpCode::Lteq);
                     return res;
                 }
+                "==" => {
+                    let mut res = Vec::new();
+                    res.extend(lhs);
+                    res.extend(rhs);
+                    res.push(OpCode::Eqeq);
+                    return res;
+                }
                 &_ => todo!(),
             }
         }
@@ -131,7 +139,6 @@ fn compiler_expr(
             res.push(OpCode::LoadVar(index));
             res
         }
-        //goes into forever loop : maybe i am setting the offset wrong, or patching the JumpIfFalse wrong
         config_ast::Expr::WhileLoop { span: _, condition, body } => {
             let mut res = Vec::new();
             let loop_entry = bc.len();

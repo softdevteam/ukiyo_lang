@@ -1,6 +1,7 @@
 use crate::compiler::{ compiler, OpCode, Ast };
 use lrlex::{ DefaultLexeme };
 use lrpar::NonStreamingLexer;
+use core::panic;
 use std::{ fmt };
 
 #[derive(Debug, Clone)]
@@ -110,6 +111,18 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 }
                 pc += 1;
             }
+            OpCode::Eqeq => {
+                if let (Some(rhs), Some(lhs)) = (stack.pop(), stack.pop()) {
+                    if let (Types::Int(lhs_val), Types::Int(rhs_val)) = (lhs, rhs) {
+                        stack.push(Types::Bool(lhs_val == rhs_val));
+                    } else {
+                        return Err("Cannot compare values of different types".to_string());
+                    }
+                } else {
+                    return Err("Cannot compare values on empty stack".to_string());
+                }
+                pc += 1;
+            }
             OpCode::Lteq => {
                 if let (Some(rhs), Some(lhs)) = (stack.pop(), stack.pop()) {
                     if let (Types::Int(lhs_val), Types::Int(rhs_val)) = (lhs, rhs) {
@@ -155,7 +168,9 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     Some(x) => x,
                     None => panic!("Popped from empty stack!"),
                 };
-                if let Types::Bool(false) = val {
+                if let Types::Bool(false) | Types::Int(0) = val {
+                    //println!("condition is false");
+                    //panic!();
                     //assert!(*pos != usize::max_value());
                     pc = *pos;
                 } else {
@@ -177,6 +192,7 @@ pub fn run(
 ) -> Result<Vec<Types>, String> {
     let prog = compiler(ast, lexer)?;
     //dbg!(&prog);
+    //panic!();
     let res = vm(prog)?;
     Ok(res)
 }
@@ -202,28 +218,29 @@ mod test {
         res_str.trim_end().to_string()
     }
     #[test]
-    // fn basic() {
-    //     assert_eq!(compile_and_run("2+3;"), "[5]");
-    //     assert_eq!(compile_and_run("2+3+4;"), "[9]");
-    //     assert_eq!(compile_and_run("2 + -3;"), "[-1]");
-    //     assert_eq!(compile_and_run("2 - 3"), "[-1]");
-    //     assert_eq!(compile_and_run("2 <= 3"), "[true]");
-    // }
-    // #[test]
-    // fn print_test() {
-    //     assert_eq!(compile_and_run("let a = 1; let a = 2; let b = a + 3; print(b);"), "[5]");
-    //     assert_eq!(compile_and_run("let a = 4; let b = 2; let a = b + 3; print(a);"), "[5]");
-    //     assert_eq!(
-    //         compile_and_run("let a = 1; let b = 2; let a = b + 3; print(a); print(b);"),
-    //         "[5] [2]"
-    //     );
-    //     assert_eq!(
-    //         compile_and_run(
-    //             "let a = 1; let a = 2; let b = a + 3; let z = a + b; print(z); print(b);"
-    //         ),
-    //         "[7] [5]"
-    //     );
-    // }
+    fn basic() {
+        assert_eq!(compile_and_run("2+3;"), "[5]");
+        assert_eq!(compile_and_run("2+3+4;"), "[9]");
+        assert_eq!(compile_and_run("2 + -3;"), "[-1]");
+        assert_eq!(compile_and_run("2 - 3"), "[-1]");
+        assert_eq!(compile_and_run("2 <= 3"), "[true]");
+    }
+    #[test]
+    fn print_test() {
+        assert_eq!(compile_and_run("let a = 1; let a = 2; let b = a + 3; print(b);"), "[5]");
+        assert_eq!(compile_and_run("let a = 4; let b = 2; let a = b + 3; print(a);"), "[5]");
+        assert_eq!(
+            compile_and_run("let a = 1; let b = 2; let a = b + 3; print(a); print(b);"),
+            "[5] [2]"
+        );
+        assert_eq!(
+            compile_and_run(
+                "let a = 1; let a = 2; let b = a + 3; let z = a + b; print(z); print(b);"
+            ),
+            "[7] [5]"
+        );
+    }
+    #[test]
     fn while_loop_test() {
         assert_eq!(
             compile_and_run(
@@ -238,6 +255,17 @@ mod test {
             "
             ),
             "[0] [5] [1] [4]"
+        );
+        assert_eq!(compile_and_run("while (0) {print(1); }
+            "), "");
+        assert_eq!(
+            compile_and_run("let x = 2; let y = 1; while (x < y ) {print(1); }
+            "),
+            ""
+        );
+        assert_eq!(
+            compile_and_run("let x = 2; let y = 2; while (x == y) { print(0); let y = y + 1; }"),
+            "[0]"
         )
     }
 }
