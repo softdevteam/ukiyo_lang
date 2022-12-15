@@ -41,10 +41,11 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             OpCode::PushInt(ref x) => {
                 //println!("in pushint {}", x);
                 stack.push(Types::Int(*x));
+                pc += 1;
             }
             OpCode::PushStr(..) => {
                 //stack.push(Types::String(x.clone()));
-                todo!();
+                unimplemented!();
             }
             OpCode::StoreVar(ref idx) => {
                 //println!("in storeint");
@@ -58,11 +59,13 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 } else {
                     locals.push(val);
                 }
+                pc += 1;
             }
             OpCode::LoadVar(ref idx) => {
                 //println!("we now in loadvar");
                 let val = locals[*idx].clone();
                 stack.push(val);
+                pc += 1;
             }
             OpCode::Call(label) => {
                 //println!("in call");
@@ -85,6 +88,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
 
                     println!("{}", output);
                 }
+                pc += 1;
             }
             OpCode::Plus => {
                 //println!("in plus");
@@ -94,6 +98,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     (Types::Int(x), Types::Int(y)) => stack.push(Types::Int(x + y)),
                     _ => panic!("TypeError"),
                 }
+                pc += 1;
             }
             OpCode::Minus => {
                 //println!("in minus");
@@ -103,6 +108,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     (Types::Int(x), Types::Int(y)) => stack.push(Types::Int(x - y)),
                     _ => panic!("TypeError"),
                 }
+                pc += 1;
             }
             OpCode::Lteq => {
                 if let (Some(rhs), Some(lhs)) = (stack.pop(), stack.pop()) {
@@ -114,13 +120,14 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 } else {
                     return Err("Cannot compare values on empty stack".to_string());
                 }
+                pc += 1;
             }
 
             OpCode::Lt => {
                 //println!("in LT");
                 if let (Some(ref rhs), Some(ref lhs)) = (stack.pop(), stack.pop()) {
                     if let (Types::Int(lhs_val), Types::Int(rhs_val)) = (lhs, rhs) {
-                        let res = Types::Bool(lhs_val < rhs_val);
+                        //let res = Types::Bool(lhs_val < rhs_val);
                         // println!(
                         //     "lhs {} is lt rhs {}, is true or false?: {}",
                         //     lhs_val,
@@ -134,6 +141,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 } else {
                     return Err("Cannot compare values on empty stack".to_string());
                 }
+                pc += 1;
             }
 
             OpCode::Jump(pos) => {
@@ -148,17 +156,18 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     None => panic!("Popped from empty stack!"),
                 };
                 if let Types::Bool(false) = val {
-                    //println!("pos is {}", pos);
+                    //assert!(*pos != usize::max_value());
                     pc = *pos;
+                } else {
+                    pc += 1;
                 }
             }
         }
-        pc = pc.wrapping_add(1);
     }
     //let l = stack.len();
     //println!("length of stack is: {l}");
     //assert_eq!(stack.len(), 1);
-    println!("stack length is: {}", stack.len());
+    //println!("stack length is: {}", stack.len());
     Ok(stack)
 }
 
@@ -167,6 +176,7 @@ pub fn run(
     lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>
 ) -> Result<Vec<Types>, String> {
     let prog = compiler(ast, lexer)?;
+    //dbg!(&prog);
     let res = vm(prog)?;
     Ok(res)
 }

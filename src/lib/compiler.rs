@@ -138,14 +138,16 @@ fn compiler_expr(
             //getting and pushing the condition
             let cond = compiler_expr(condition, lexer, locals, bc);
             res.extend(cond);
+            println!("bytecode length is: {}", loop_entry);
             //if condition fails then jump to offset MAXD
             res.push(OpCode::JumpIfFalse(MAXD));
+            let exit_call = bc.len() + res.len() - 1;
             //getting body and pushing it to res
             let body = compiler_expr(body, lexer, locals, bc);
             res.extend(body);
             //
             res.push(OpCode::Jump(loop_entry));
-            res.push(OpCode::JumpIfFalse(bc.len()));
+            res.push(OpCode::JumpIfFalse(exit_call));
             res
         }
 

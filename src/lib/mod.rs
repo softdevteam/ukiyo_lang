@@ -34,7 +34,7 @@ pub fn compile() {
                         //println!("Result: {:?}", r)
                         let output = run(r, &lexer).unwrap();
                         for element in output {
-                            print!("{} ", element);
+                            print!("[{}] ", element);
                         }
                     }
                     _ => eprintln!("Unable to evaluate expression."),
