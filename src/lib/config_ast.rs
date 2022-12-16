@@ -33,6 +33,11 @@ pub enum Expr {
         condition: Box<Expr>,
         body: Box<Expr>,
     },
+    IfStatement {
+        span: Span,
+        condition: Box<Expr>,
+        body: Box<Expr>,
+    },
 }
 impl Expr {
     pub fn span(&self) -> Span {
@@ -44,6 +49,7 @@ impl Expr {
             Expr::VarLookup(span) => *span,
             Expr::Print { span, .. } => *span,
             Expr::WhileLoop { span, .. } => *span,
+            Expr::IfStatement { span, .. } => *span,
             Expr::Prog { span, .. } => *span,
         }
     }

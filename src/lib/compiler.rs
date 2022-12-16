@@ -185,7 +185,15 @@ fn compiler_expr(
             res.push(OpCode::JumpIfFalse(exit_call));
             res
         }
-
+        config_ast::Expr::IfStatement { span: _, condition, body } => {
+            let mut res = Vec::new();
+            let cond = compiler_expr(condition, lexer, locals, bc);
+            res.extend(cond);
+            res.push(OpCode::JumpIfFalse(MAXD));
+            let body = compiler_expr(body, lexer, locals, bc);
+            res.extend(body);
+            res
+        }
         config_ast::Expr::Prog { span: _, stmts } => {
             let mut res = Vec::new();
             for stmt in stmts {

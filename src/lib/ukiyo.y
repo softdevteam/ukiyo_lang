@@ -10,12 +10,17 @@ statement -> Result<Expr, ()>:
           | assigment  "SEMICOLON" { $1 }
           | print_statement "SEMICOLON" { $1 }
           | while_loop { $1 }
+          | if_statement { $1 }
           ;
 
+if_statement -> Result<Expr, ()>:
+                "IF" binary_expression body {
+                  Ok(Expr::IfStatement { span: $span, condition: Box::new($2?), body: Box::new($3?)})
+                };
 print_statement -> Result<Expr, ()>: 
-          "PRINT" "LBRACK" binary_expression "RBRACK" {  
-            Ok(Expr::Print { span: $span, args: Box::new($3?)})
-          };
+                   "PRINT" "LBRACK" binary_expression "RBRACK" {  
+                   Ok(Expr::Print { span: $span, args: Box::new($3?)})
+                 };
 
 while_loop -> Result<Expr, ()>:
               "WHILE" "LBRACK" binary_expression "RBRACK"  body {

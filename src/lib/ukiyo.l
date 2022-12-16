@@ -1,9 +1,4 @@
 %%
-[0-9]+ "INT"
-while "WHILE"
-let "LET"
-print "PRINT"
-
 \( "LBRACK"
 \) "RBRACK"
 \{ "LBRACE"
@@ -21,6 +16,13 @@ print "PRINT"
 <   "LT"
 >   "GT"
 
+while "WHILE"
+let "LET"
+print "PRINT"
+if "IF"
+else "ELSE"
+
+[0-9]+ "INT"
 [a-zA-Z_][a-zA-Z0-9_]*  "IDENTIFIER"
 [ \t\n\r]+              ;
 (//.*?$|/[*].*?[*]/)    ;

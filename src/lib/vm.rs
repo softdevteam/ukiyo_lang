@@ -165,8 +165,8 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
 
 pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> Vec<Types> {
     let prog = compiler(ast, lexer);
-    // dbg!(&prog);
-    // panic!();
+    //dbg!(&prog);
+    //panic!();
     let res = vm(prog.unwrap());
     res.unwrap()
 }
@@ -192,7 +192,8 @@ mod test {
         res_str.trim_end().to_string()
     }
     #[test]
-    fn push_str() {
+    fn str_test() {
+        assert_eq!(compile_and_run("\"\""), "[]");
         assert_eq!(compile_and_run("\"hello\""), "[hello]");
         assert_eq!(
             compile_and_run("let a = \"Hello, World!\" ; let b = a; print(b);"),
@@ -227,6 +228,12 @@ mod test {
             ),
             "[7] [5]"
         );
+    }
+    #[test]
+    fn if_statement() {
+        assert_eq!(compile_and_run("if(0) { print(\"hi\"); }"), "");
+        assert_eq!(compile_and_run("if(1) { print(\"hi\"); }"), "[hi]");
+        assert_eq!(compile_and_run("let a = 1; let b = 2; if(a < b) { print(a); }"), "[1]");
     }
     #[test]
     fn while_loop_test() {
