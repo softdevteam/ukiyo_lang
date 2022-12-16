@@ -22,9 +22,6 @@ while_loop -> Result<Expr, ()>:
               Ok(Expr::WhileLoop { span: $span, condition: Box::new($3?), body: Box::new($5?)})
               };
               
-// condition -> Result<Expr, ()>:
-//             binary_expression { $1 }
-//             ;
 
 body -> Result<Expr, ()>:
         "LBRACE" prog "RBRACE" { Ok(Expr::Prog { span: $span, stmts: $2?}) }
@@ -37,8 +34,8 @@ assigment -> Result<Expr, ()>:
             };
 
 unit -> Result<Expr, ()>:
-        "IDENTIFIER" { Ok(Expr::VarLookup(map_err($1)?)) }
-      | literal { $1 }
+        literal { $1 }
+      | "IDENTIFIER" { Ok(Expr::VarLookup(map_err($1)?)) } 
       | "LBRACK" binary_expression "RBRACK" { $2 }
       ;
           

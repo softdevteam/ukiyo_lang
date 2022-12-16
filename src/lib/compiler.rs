@@ -53,7 +53,39 @@ fn compiler_expr(
             res.push(OpCode::PushInt(tmp));
             res
         }
-        //error when "let a = 1; let b = 2; let a = b + 3; print(b); <- prints 1 instead of 2"
+        config_ast::Expr::String(span) => {
+            let mut res = Vec::new();
+            let s_orig = lexer.span_str(*span);
+            let mut new_s = String::new();
+            // Start by ignoring the beginning quote.
+            let mut i = '\"'.len_utf8();
+            // End by ignoring the beginning quote.
+            while i < s_orig.len() - '\"'.len_utf8() {
+                let mut c = s_orig[i..].chars().next().unwrap();
+                if c == '\\' {
+                    i += c.len_utf8();
+                    let next_c = s_orig[i..].chars().next().unwrap();
+                    c = match next_c {
+                        't' => '\t',
+                        'b' => '\x08',
+                        'n' => '\n',
+                        'r' => '\r',
+                        'f' => '\x0C',
+                        '\'' => '\'',
+                        '\\' => '\\',
+                        '0' => '\0',
+                        _ => next_c,
+                    };
+                }
+                new_s.push(c);
+                i += c.len_utf8();
+            }
+            //SPLIT STRING AFTER TAKING THE MATCHING CLOSING `"`
+            // let val = lexer.span_str(*span).parse().unwrap();
+
+            res.push(OpCode::PushStr(new_s));
+            res
+        }
         config_ast::Expr::Assign { span: _, ref id, ref expr } => {
             let mut res = Vec::new();
             let val = compiler_expr(&expr, lexer, locals, bc);
@@ -122,10 +154,6 @@ fn compiler_expr(
                 }
                 &_ => todo!(),
             }
-        }
-        config_ast::Expr::String(..) => {
-            //todo
-            unimplemented!();
         }
         config_ast::Expr::VarLookup(ref id) => {
             let mut res = Vec::new();

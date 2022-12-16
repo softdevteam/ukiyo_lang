@@ -8,7 +8,8 @@ print "PRINT"
 \) "RBRACK"
 \{ "LBRACE"
 \} "RBRACE"
-'(?:\\\\|\\'|[^'])*' "STRING"
+"(?:\\"|[^"\n])*" "STRING"
+
 ;   "SEMICOLON"
 ,   "COMMA"
 =   "EQ"
@@ -19,8 +20,7 @@ print "PRINT"
 >=  "GTEQ"
 <   "LT"
 >   "GT"
-[a-zA-Z_][a-zA-Z0-9_]*  "IDENTIFIER"
-[ \t\n\r]+              ;
 
+[a-zA-Z_][a-zA-Z0-9_]*  "IDENTIFIER"
 [ \t\n\r]+              ;
 (//.*?$|/[*].*?[*]/)    ;

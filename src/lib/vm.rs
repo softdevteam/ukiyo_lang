@@ -40,19 +40,15 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
         let expr = &prog[pc];
         match &*expr {
             OpCode::PushInt(ref x) => {
-                //println!("in pushint {}", x);
                 stack.push(Types::Int(*x));
                 pc += 1;
             }
-            OpCode::PushStr(..) => {
-                //stack.push(Types::String(x.clone()));
-                unimplemented!();
+            OpCode::PushStr(ref x) => {
+                stack.push(Types::String(x.clone()));
+                pc += 1;
             }
             OpCode::StoreVar(ref idx) => {
-                //println!("in storeint");
-                //setting default values for val
-
-                // Use the default value with the unwrap_or_else() method
+                //change here to handle default cases foe each type
                 let val = stack.pop().unwrap_or_else(|| { Types::Int(0) });
                 let len = locals.len();
                 if *idx < len {
@@ -63,13 +59,11 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 pc += 1;
             }
             OpCode::LoadVar(ref idx) => {
-                //println!("we now in loadvar");
                 let val = locals[*idx].clone();
                 stack.push(val);
                 pc += 1;
             }
             OpCode::Call(label) => {
-                //println!("in call");
                 if label == "print" {
                     let mut output = String::new();
 
@@ -92,7 +86,6 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 pc += 1;
             }
             OpCode::Plus => {
-                //println!("in plus");
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 match (lhs, rhs) {
@@ -102,7 +95,6 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 pc += 1;
             }
             OpCode::Minus => {
-                //println!("in minus");
                 let rhs = stack.pop().unwrap();
                 let lhs = stack.pop().unwrap();
                 match (lhs, rhs) {
@@ -137,16 +129,8 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             }
 
             OpCode::Lt => {
-                //println!("in LT");
                 if let (Some(ref rhs), Some(ref lhs)) = (stack.pop(), stack.pop()) {
                     if let (Types::Int(lhs_val), Types::Int(rhs_val)) = (lhs, rhs) {
-                        //let res = Types::Bool(lhs_val < rhs_val);
-                        // println!(
-                        //     "lhs {} is lt rhs {}, is true or false?: {}",
-                        //     lhs_val,
-                        //     rhs_val,
-                        //     res
-                        // );
                         stack.push(Types::Bool(lhs_val < rhs_val));
                     } else {
                         return Err("Cannot compare values of different types".to_string());
@@ -158,8 +142,6 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             }
 
             OpCode::Jump(pos) => {
-                //println!("in jump");
-                // Loop through the program and find the instruction with the specified label
                 pc = *pos;
             }
             OpCode::JumpIfFalse(pos) => {
@@ -169,7 +151,6 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     None => panic!("Popped from empty stack!"),
                 };
                 if let Types::Bool(false) | Types::Int(0) = val {
-                    //println!("condition is false");
                     //panic!();
                     //assert!(*pos != usize::max_value());
                     pc = *pos;
@@ -179,22 +160,15 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             }
         }
     }
-    //let l = stack.len();
-    //println!("length of stack is: {l}");
-    //assert_eq!(stack.len(), 1);
-    //println!("stack length is: {}", stack.len());
     Ok(stack)
 }
 
-pub fn run(
-    ast: Ast,
-    lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>
-) -> Result<Vec<Types>, String> {
-    let prog = compiler(ast, lexer)?;
-    //dbg!(&prog);
-    //panic!();
-    let res = vm(prog)?;
-    Ok(res)
+pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> Vec<Types> {
+    let prog = compiler(ast, lexer);
+    // dbg!(&prog);
+    // panic!();
+    let res = vm(prog.unwrap());
+    res.unwrap()
 }
 
 #[cfg(test)]
@@ -210,12 +184,26 @@ mod test {
         let lexerdef = ukiyo_l::lexerdef();
         let lexer = lexerdef.lexer(input);
         let res = ukiyo_y::parse(&lexer).0.unwrap().unwrap();
-        let output = run(res, &lexer).unwrap();
+        let output = run(res, &lexer);
         let mut res_str = String::new();
         for element in output.iter() {
             res_str.push_str(&format!("[{}] ", element));
         }
         res_str.trim_end().to_string()
+    }
+    #[test]
+    fn push_str() {
+        assert_eq!(compile_and_run("\"hello\""), "[hello]");
+        assert_eq!(
+            compile_and_run("let a = \"Hello, World!\" ; let b = a; print(b);"),
+            "[Hello, World!]"
+        );
+        assert_eq!(
+            compile_and_run(
+                "let a = \"Hello, World!\" ; let i = 0; while (i < 2) { print(a); let i = i + 1;}"
+            ),
+            "[Hello, World!] [Hello, World!]"
+        );
     }
     #[test]
     fn basic() {
@@ -245,22 +233,22 @@ mod test {
         assert_eq!(
             compile_and_run(
                 "let z = 0; while (z < 1) {print(z); let z = z + 1; print(z); }
-            "
+                "
             ),
             "[0] [1]"
         );
         assert_eq!(
             compile_and_run(
                 "let x = 0; let y = 5  while (x < y) {print(x); let x = x + 1; print(y); let y = y - x; }
-            "
+                "
             ),
             "[0] [5] [1] [4]"
         );
         assert_eq!(compile_and_run("while (0) {print(1); }
-            "), "");
+                "), "");
         assert_eq!(
             compile_and_run("let x = 2; let y = 1; while (x < y ) {print(1); }
-            "),
+                "),
             ""
         );
         assert_eq!(

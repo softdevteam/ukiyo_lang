@@ -31,11 +31,10 @@ pub fn compile() {
                 }
                 match res {
                     Some(Ok(r)) => {
-                        //println!("Result: {:?}", r)
-                        let output = run(r, &lexer).unwrap();
-                        for element in output {
-                            print!("{} ", element);
-                        }
+                        println!("{:?}", run(r, &lexer));
+                        // for element in output {
+                        //     print!("{}", element);
+                        // }
                     }
                     _ => eprintln!("Unable to evaluate expression."),
                 }
