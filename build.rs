@@ -1,5 +1,5 @@
 use cfgrammar::yacc::YaccKind;
-use lrlex::{ self, CTLexerBuilder };
+use lrlex::{self, CTLexerBuilder};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     CTLexerBuilder::new()

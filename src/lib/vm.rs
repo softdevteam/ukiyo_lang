@@ -1,8 +1,8 @@
-use crate::compiler::{ compiler, OpCode, Ast };
-use lrlex::{ DefaultLexeme };
-use lrpar::NonStreamingLexer;
+use crate::compiler::{compiler, Ast, OpCode};
 use core::panic;
-use std::{ fmt };
+use lrlex::DefaultLexeme;
+use lrpar::NonStreamingLexer;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Types {
@@ -49,7 +49,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
             }
             OpCode::StoreVar(ref idx) => {
                 //change here to handle default cases foe each type
-                let val = stack.pop().unwrap_or_else(|| { Types::Int(0) });
+                let val = stack.pop().unwrap_or_else(|| Types::Int(0));
                 let len = locals.len();
                 if *idx < len {
                     locals[*idx] = val;
@@ -216,8 +216,14 @@ mod test {
     }
     #[test]
     fn print_test() {
-        assert_eq!(compile_and_run("let a = 1; let a = 2; let b = a + 3; print(b);"), "[5]");
-        assert_eq!(compile_and_run("let a = 4; let b = 2; let a = b + 3; print(a);"), "[5]");
+        assert_eq!(
+            compile_and_run("let a = 1; let a = 2; let b = a + 3; print(b);"),
+            "[5]"
+        );
+        assert_eq!(
+            compile_and_run("let a = 4; let b = 2; let a = b + 3; print(a);"),
+            "[5]"
+        );
         assert_eq!(
             compile_and_run("let a = 1; let b = 2; let a = b + 3; print(a); print(b);"),
             "[5] [2]"
@@ -233,7 +239,10 @@ mod test {
     fn if_statement() {
         assert_eq!(compile_and_run("if(0) { print(\"hi\"); }"), "");
         assert_eq!(compile_and_run("if(1) { print(\"hi\"); }"), "[hi]");
-        assert_eq!(compile_and_run("let a = 1; let b = 2; if(a < b) { print(a); }"), "[1]");
+        assert_eq!(
+            compile_and_run("let a = 1; let b = 2; if(a < b) { print(a); }"),
+            "[1]"
+        );
     }
     #[test]
     fn while_loop_test() {
@@ -251,11 +260,18 @@ mod test {
             ),
             "[0] [5] [1] [4]"
         );
-        assert_eq!(compile_and_run("while (0) {print(1); }
-                "), "");
         assert_eq!(
-            compile_and_run("let x = 2; let y = 1; while (x < y ) {print(1); }
-                "),
+            compile_and_run(
+                "while (0) {print(1); }
+                "
+            ),
+            ""
+        );
+        assert_eq!(
+            compile_and_run(
+                "let x = 2; let y = 1; while (x < y ) {print(1); }
+                "
+            ),
             ""
         );
         assert_eq!(

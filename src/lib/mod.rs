@@ -1,11 +1,10 @@
+pub mod compiler;
 pub mod config_ast;
 pub mod vm;
-pub mod compiler;
 
-use std::io::{ self, BufRead, Write };
 use lrlex::lrlex_mod;
 use lrpar::lrpar_mod;
-
+use std::io::{self, BufRead, Write};
 lrlex_mod!("lib/ukiyo.l");
 lrpar_mod!("lib/ukiyo.y");
 
