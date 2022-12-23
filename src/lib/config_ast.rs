@@ -38,7 +38,18 @@ pub enum Expr {
         condition: Box<Expr>,
         body: Box<Expr>,
     },
+    FuncDef {
+        span: Span,
+        name: Span,
+        args_list: Vec<Span>,
+        body: Box<Expr>,
+    },
+    Call {
+        span: Span,
+        name: Span,
+    },
 }
+
 impl Expr {
     pub fn span(&self) -> Span {
         match self {
@@ -51,6 +62,8 @@ impl Expr {
             Expr::WhileLoop { span, .. } => *span,
             Expr::IfStatement { span, .. } => *span,
             Expr::Prog { span, .. } => *span,
+            Expr::FuncDef { span, .. } => *span,
+            Expr::Call { span, .. } => *span,
         }
     }
 }

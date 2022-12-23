@@ -11,8 +11,25 @@ statement -> Result<Expr, ()>:
           | print_statement "SEMICOLON" { $1 }
           | while_loop { $1 }
           | if_statement { $1 }
+          | func_def { $1 }
           ;
 
+func_def -> Result<Expr, ()>:
+            "FUNC" "IDENTIFIER" "LBRACK" args_list "RBRACK" body {
+            Ok(Expr::FuncDef {  span: $span, name: map_err($2)?, args_list: $4?,
+                body: Box::new($6?),}) 
+            };
+
+args_list -> Result<Vec<Span>, ()>:
+            { Ok(vec![]) }
+          | args { $1 }
+          ;
+
+args -> Result<Vec<Span>,  ()>:
+          "IDENTIFIER" { Ok(vec![map_err($1)?]) }
+        | args "COMMA" "IDENTIFIER" { flattenr_span($1, $3) }
+        ;
+        
 if_statement -> Result<Expr, ()>:
                 "IF" binary_expression body {
                   Ok(Expr::IfStatement { span: $span, condition: Box::new($2?), body: Box::new($3?)})
@@ -27,6 +44,7 @@ while_loop -> Result<Expr, ()>:
               Ok(Expr::WhileLoop { span: $span, condition: Box::new($3?), body: Box::new($5?)})
               };
               
+
 
 body -> Result<Expr, ()>:
         "LBRACE" prog "RBRACE" { Ok(Expr::Prog { span: $span, stmts: $2?}) }
@@ -68,8 +86,7 @@ bin_op -> Result<Span, ()>:
         | "EQEQ"  { Ok(map_err($1)?) }
         ;
 %%
-use crate::config_ast::{Expr};
-// use std::error::Error;
+use crate::config_ast::{ Expr };
 use lrlex::DefaultLexeme;
 use lrpar::Span;
 
@@ -85,5 +102,11 @@ fn map_err(r: Result<DefaultLexeme<StorageT>, DefaultLexeme<StorageT>>)
 fn flattenr<T>(lhs: Result<Vec<T>, ()>, rhs: Result<T, ()>) -> Result<Vec<T>, ()> {
     let mut flt = lhs?;
     flt.push(rhs?);
+    Ok(flt)
+}
+/// Flatten `rhs` into `lhs`.
+fn flattenr_span(lhs: Result<Vec<Span>, ()>, rhs: Result< DefaultLexeme<StorageT>, DefaultLexeme<StorageT>>) -> Result<Vec<Span>, ()> {
+    let mut flt = lhs?;
+    flt.push(rhs.map_err(|_| ())?.span());
     Ok(flt)
 }

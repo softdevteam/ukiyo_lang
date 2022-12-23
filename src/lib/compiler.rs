@@ -1,6 +1,6 @@
-use crate::config_ast::{self};
+use crate::config_ast::{ self };
 use lrlex::DefaultLexeme;
-use lrpar::NonStreamingLexer;
+use lrpar::{ NonStreamingLexer };
 pub type Ast = Vec<config_ast::Expr>;
 const MAXD: usize = usize::max_value();
 #[derive(Debug, Clone)]
@@ -17,11 +17,13 @@ pub enum OpCode {
     Call(String),
     Jump(usize),
     JumpIfFalse(usize),
+    Return,
+    DefineFunc(String, Vec<OpCode>),
 }
 
 pub fn compiler(
     ast: Ast,
-    lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,
+    lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>
 ) -> Result<Vec<OpCode>, String> {
     if ast.is_empty() {
         return Ok(Vec::new());
@@ -41,14 +43,10 @@ fn compiler_expr(
     node: &config_ast::Expr,
     lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,
     locals: &mut Vec<String>,
-    bc: &Vec<OpCode>,
+    bc: &Vec<OpCode>
 ) -> Vec<OpCode> {
     match node {
-        config_ast::Expr::Int {
-            span: _,
-            is_negative,
-            val,
-        } => {
+        config_ast::Expr::Int { span: _, is_negative, val } => {
             let mut tmp = lexer.span_str(*val).parse().unwrap();
             let mut res = Vec::new();
             if *is_negative {
@@ -90,11 +88,7 @@ fn compiler_expr(
             res.push(OpCode::PushStr(new_s));
             res
         }
-        config_ast::Expr::Assign {
-            span: _,
-            ref id,
-            ref expr,
-        } => {
+        config_ast::Expr::Assign { span: _, ref id, ref expr } => {
             let mut res = Vec::new();
             let val = compiler_expr(&expr, lexer, locals, bc);
             let idx_str = lexer.span_str(*id).to_string();
@@ -116,16 +110,11 @@ fn compiler_expr(
             let args = &*args;
             let val = compiler_expr(&args, lexer, locals, bc);
             res.extend(val);
-
+            println!("In print call");
             res.push(OpCode::Call(label));
             res
         }
-        config_ast::Expr::BinaryOp {
-            span: _,
-            op,
-            lhs,
-            rhs,
-        } => {
+        config_ast::Expr::BinaryOp { span: _, op, lhs, rhs } => {
             let lhs = compiler_expr(lhs, lexer, locals, bc);
             let rhs = compiler_expr(rhs, lexer, locals, bc);
             let _op = lexer.span_str(*op);
@@ -180,11 +169,7 @@ fn compiler_expr(
             res.push(OpCode::LoadVar(index));
             res
         }
-        config_ast::Expr::WhileLoop {
-            span: _,
-            condition,
-            body,
-        } => {
+        config_ast::Expr::WhileLoop { span: _, condition, body } => {
             let mut res = Vec::new();
             let loop_entry = bc.len();
             //getting and pushing the condition
@@ -202,11 +187,7 @@ fn compiler_expr(
             res.push(OpCode::JumpIfFalse(exit_call));
             res
         }
-        config_ast::Expr::IfStatement {
-            span: _,
-            condition,
-            body,
-        } => {
+        config_ast::Expr::IfStatement { span: _, condition, body } => {
             let mut res = Vec::new();
             let cond = compiler_expr(condition, lexer, locals, bc);
             res.extend(cond);
@@ -220,6 +201,33 @@ fn compiler_expr(
             for stmt in stmts {
                 res.extend(compiler_expr(stmt, lexer, locals, bc));
             }
+            res
+        }
+        config_ast::Expr::FuncDef { span: _, name, args_list, body } => {
+            let mut res = Vec::new();
+            let mut new_locals = Vec::new();
+            let mut func_body = Vec::new();
+
+            for arg in args_list.iter() {
+                let idx_str = lexer.span_str(*arg).to_string();
+                println!("arg is : {}", idx_str);
+                new_locals.push(idx_str);
+            }
+            println!("new local is: {:?}", new_locals);
+            let body = compiler_expr(body, lexer, &mut new_locals, bc);
+            println!("body is {:?}", body);
+            func_body.extend(body);
+            let func_name = lexer.span_str(*name).to_string();
+            println!("function name is {} and body is {:?}", func_name, func_body);
+            res.push(OpCode::DefineFunc(func_name, func_body));
+            println!("res is {:?}", res);
+            res
+        }
+
+        config_ast::Expr::Call { span, name } => {
+            let mut res = Vec::new();
+            let func_name = lexer.span_str(*name).to_string();
+            res.push(OpCode::Call(func_name));
             res
         }
     }

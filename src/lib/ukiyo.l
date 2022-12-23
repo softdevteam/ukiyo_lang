@@ -15,7 +15,7 @@
 >=  "GTEQ"
 <   "LT"
 >   "GT"
-
+func "FUNC"
 while "WHILE"
 let "LET"
 print "PRINT"
