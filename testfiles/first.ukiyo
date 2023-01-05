@@ -1,1 +1,1 @@
-func weird() { print("hello"); } func hello() { weird(); }
+func weird() { print("hello"); } 

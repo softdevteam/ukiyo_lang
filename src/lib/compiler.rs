@@ -210,20 +210,27 @@ fn compiler_expr(
                 let idx_str = lexer.span_str(*arg).to_string();
                 new_locals.push(idx_str);
             }
-
             let body = compiler_expr(body, lexer, &mut new_locals, bc);
 
             func_body.extend(body);
             let func_name = lexer.span_str(*name).to_string();
             res.push(OpCode::DefineFunc(func_name.clone(), func_body));
-            res.push(OpCode::Call(func_name));
+            //res.push(OpCode::Call(func_name));
             res
         }
 
-        config_ast::Expr::Call { span, name, args_list: _ } => {
+        config_ast::Expr::Call { span, name, params } => {
             let mut res = Vec::new();
+            let parsms = compiler_expr(params, lexer, locals, bc);
             let func_name = lexer.span_str(*name).to_string();
             res.push(OpCode::Call(func_name));
+            res
+        }
+        config_ast::Expr::ExprList(exprs) => {
+            let mut res = Vec::new();
+            for expr in exprs {
+                res.extend(compiler_expr(expr, lexer, locals, bc));
+            }
             res
         }
     }

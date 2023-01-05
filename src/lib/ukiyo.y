@@ -16,9 +16,26 @@ statement -> Result<Expr, ()>:
           ;
 
 func_call -> Result<Expr, ()>:
-            "IDENTIFIER" "LBRACK" args_list "RBRACK" {
-              Ok(Expr::Call { span: $span, name: map_err($2)?, args_list: $3?})
+            "IDENTIFIER" "LBRACK" param_list "RBRACK" {
+              Ok(Expr::Call { span: $span, name: map_err($2)?, params: Box::new($3?)})
             };
+
+param_list -> Result<Expr, ()>:
+          { Ok(Expr::ExprList(vec![])) }
+        | params { $1 }
+        ;
+
+params -> Result<Expr, ()>:
+         binary_expression { Ok(Expr::ExprList(vec![$1?])) }
+        | params "COMMA" binary_expression { 
+            let mut v = match $1? {
+                Expr::ExprList(v) => v,
+                _ => return Err(()),
+            };
+            v.push($3?);
+            Ok(Expr::ExprList(v))
+          }
+       ;
 
 func_def -> Result<Expr, ()>:
             "FUNC" "IDENTIFIER" "LBRACK" args_list "RBRACK" body {
