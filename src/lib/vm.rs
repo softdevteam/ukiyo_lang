@@ -91,7 +91,6 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     println!("{}", output);
                 } else {
                     // search for the user-defined function
-                    println!("in user define func");
                     let func = functions.iter().find(|f| f.name == *label);
                     if let Some(func) = func {
                         // execute the user-defined function
@@ -185,19 +184,8 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     prog: func_prog.to_vec(),
                 };
                 functions.push(func);
-                println!("functions is: {:?}", functions);
                 pc += 1;
             }
-
-            // OpCode::Call(name) => {
-            //     let func = functions
-            //         .iter()
-            //         .find(|f| f.name == *name)
-            //         .unwrap();
-            //     let res = vm(func.prog.to_vec());
-            //     stack.extend(res.unwrap());
-            //     pc += 1;
-            // }
         }
     }
     Ok(stack)

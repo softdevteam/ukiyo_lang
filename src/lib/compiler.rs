@@ -110,7 +110,6 @@ fn compiler_expr(
             let args = &*args;
             let val = compiler_expr(&args, lexer, locals, bc);
             res.extend(val);
-            println!("In print call");
             res.push(OpCode::Call(label));
             res
         }
@@ -172,17 +171,16 @@ fn compiler_expr(
         config_ast::Expr::WhileLoop { span: _, condition, body } => {
             let mut res = Vec::new();
             let loop_entry = bc.len();
-            //getting and pushing the condition
+
             let cond = compiler_expr(condition, lexer, locals, bc);
             res.extend(cond);
-            //println!("bytecode length is: {}", loop_entry);
-            //if condition fails then jump to offset MAXD
+
             res.push(OpCode::JumpIfFalse(MAXD));
             let exit_call = bc.len() + res.len() - 1;
-            //getting body and pushing it to res
+
             let body = compiler_expr(body, lexer, locals, bc);
             res.extend(body);
-            //
+
             res.push(OpCode::Jump(loop_entry));
             res.push(OpCode::JumpIfFalse(exit_call));
             res
@@ -210,21 +208,19 @@ fn compiler_expr(
 
             for arg in args_list.iter() {
                 let idx_str = lexer.span_str(*arg).to_string();
-                println!("arg is : {}", idx_str);
                 new_locals.push(idx_str);
             }
-            println!("new local is: {:?}", new_locals);
+
             let body = compiler_expr(body, lexer, &mut new_locals, bc);
-            println!("body is {:?}", body);
+
             func_body.extend(body);
             let func_name = lexer.span_str(*name).to_string();
-            println!("function name is {} and body is {:?}", func_name, func_body);
-            res.push(OpCode::DefineFunc(func_name, func_body));
-            println!("res is {:?}", res);
+            res.push(OpCode::DefineFunc(func_name.clone(), func_body));
+            res.push(OpCode::Call(func_name));
             res
         }
 
-        config_ast::Expr::Call { span, name } => {
+        config_ast::Expr::Call { span, name, args_list: _ } => {
             let mut res = Vec::new();
             let func_name = lexer.span_str(*name).to_string();
             res.push(OpCode::Call(func_name));

@@ -12,7 +12,13 @@ statement -> Result<Expr, ()>:
           | while_loop { $1 }
           | if_statement { $1 }
           | func_def { $1 }
+          | func_call "SEMICOLON" { $1 }
           ;
+
+func_call -> Result<Expr, ()>:
+            "IDENTIFIER" "LBRACK" args_list "RBRACK" {
+              Ok(Expr::Call { span: $span, name: map_err($2)?, args_list: $3?})
+            };
 
 func_def -> Result<Expr, ()>:
             "FUNC" "IDENTIFIER" "LBRACK" args_list "RBRACK" body {

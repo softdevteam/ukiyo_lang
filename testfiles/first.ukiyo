@@ -1,1 +1,1 @@
-let x = 10; func weird(x) {print(x); }
+func weird() { print("hello"); } func hello() { weird(); }
