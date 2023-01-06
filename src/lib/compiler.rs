@@ -218,9 +218,11 @@ fn compiler_expr(
             res
         }
 
-        config_ast::Expr::Call { span, name, params } => {
+        config_ast::Expr::Call { span: _, name, params } => {
             let mut res = Vec::new();
-            let parsms = compiler_expr(params, lexer, locals, bc);
+            let params = &*params;
+            let val = compiler_expr(&params, lexer, locals, bc);
+            res.extend(val);
             let func_name = lexer.span_str(*name).to_string();
             res.push(OpCode::Call(func_name));
             res

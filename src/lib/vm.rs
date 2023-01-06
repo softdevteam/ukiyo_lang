@@ -91,6 +91,8 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     println!("{}", output);
                 } else {
                     // search for the user-defined function
+                    let val = stack.pop();
+                    println!("args {:?}", val);
                     let func = functions.iter().find(|f| f.name == *label);
                     if let Some(func) = func {
                         // execute the user-defined function
@@ -179,6 +181,7 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
 
             OpCode::DefineFunc(name, func_prog) => {
                 // Define a new function in the VM
+                println!("func prog {:?}", func_prog);
                 let func = Function {
                     name: name.to_string(),
                     prog: func_prog.to_vec(),
