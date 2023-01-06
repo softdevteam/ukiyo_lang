@@ -17,7 +17,7 @@ statement -> Result<Expr, ()>:
 
 func_call -> Result<Expr, ()>:
             "IDENTIFIER" "LBRACK" param_list "RBRACK" {
-              Ok(Expr::Call { span: $span, name: map_err($2)?, params: Box::new($3?)})
+              Ok(Expr::Call { span: $span, name: map_err($1)?, params: Box::new($3?)})
             };
 
 param_list -> Result<Expr, ()>:

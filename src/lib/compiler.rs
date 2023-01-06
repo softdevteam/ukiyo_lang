@@ -215,7 +215,6 @@ fn compiler_expr(
             func_body.extend(body);
             let func_name = lexer.span_str(*name).to_string();
             res.push(OpCode::DefineFunc(func_name.clone(), func_body));
-            //res.push(OpCode::Call(func_name));
             res
         }
 

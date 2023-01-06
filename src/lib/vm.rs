@@ -94,7 +94,6 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     let func = functions.iter().find(|f| f.name == *label);
                     if let Some(func) = func {
                         // execute the user-defined function
-                        println!("func name: {}", func.name);
                         let res = vm(func.prog.clone())?;
                         stack.extend(res);
                     } else {
