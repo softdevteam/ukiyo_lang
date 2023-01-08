@@ -42,7 +42,7 @@ pub enum Expr {
     FuncDef {
         span: Span,
         name: Span,
-        args_list: Vec<Span>,
+        args_list: Box<Expr>,
         body: Box<Expr>,
     },
     Call {

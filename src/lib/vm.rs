@@ -14,6 +14,7 @@ pub enum Types {
 #[derive(Debug, Clone)]
 pub struct Function {
     pub name: String,
+    pub args: Vec<OpCode>,
     pub prog: Vec<OpCode>,
 }
 
@@ -34,14 +35,14 @@ impl fmt::Display for Types {
     }
 }
 
-fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
+fn vm(prog: Vec<OpCode>, locals: &mut Vec<Types>) -> Result<Vec<Types>, String> {
     if prog.is_empty() {
         return Err("Cannot execute empty program".to_string());
     }
     let mut pc = 0;
     let mut stack: Vec<Types> = Vec::new();
     //initialize with exact size for locals.
-    let mut locals: Vec<Types> = Vec::new();
+    //let mut locals: Vec<Types> = Vec::new();
     let mut functions: Vec<Function> = Vec::new();
     while pc < prog.len() {
         let expr = &prog[pc];
@@ -91,12 +92,31 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                     println!("{}", output);
                 } else {
                     // search for the user-defined function
-                    let val = stack.pop();
-                    println!("args {:?}", val);
                     let func = functions.iter().find(|f| f.name == *label);
                     if let Some(func) = func {
-                        // execute the user-defined function
-                        let res = vm(func.prog.clone())?;
+                        //to pass args in local
+                        let mut arg_values = Vec::new();
+                        if let arg_vec = &func.args {
+                            for arg in arg_vec {
+                                //println!("arg is {}  and {:?}", arg, arg);
+                                let val = match arg {
+                                    OpCode::PushInt(x) => Types::Int(*x),
+                                    OpCode::PushStr(x) => Types::String(x.clone()),
+                                    OpCode::LoadVar(x) => {
+                                        let val = locals[*x].clone();
+                                        stack.push(val.clone());
+                                        val
+                                    }
+                                    _ => {
+                                        return Err(
+                                            "Invalid argument type for function".to_string()
+                                        );
+                                    }
+                                };
+                                arg_values.push(val);
+                            }
+                        }
+                        let res = vm(func.prog.clone(), &mut arg_values)?;
                         stack.extend(res);
                     } else {
                         return Err(format!("Function '{}' not found", label));
@@ -179,11 +199,11 @@ fn vm(prog: Vec<OpCode>) -> Result<Vec<Types>, String> {
                 return Ok(stack);
             }
 
-            OpCode::DefineFunc(name, func_prog) => {
+            OpCode::DefineFunc(name, args, func_prog) => {
                 // Define a new function in the VM
-                println!("func prog {:?}", func_prog);
                 let func = Function {
                     name: name.to_string(),
+                    args: args.to_vec(),
                     prog: func_prog.to_vec(),
                 };
                 functions.push(func);
@@ -198,7 +218,8 @@ pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> 
     let prog = compiler(ast, lexer);
     dbg!(&prog);
     //panic!();
-    let res = vm(prog.unwrap());
+    let mut locals: Vec<Types> = Vec::new();
+    let res = vm(prog.unwrap(), &mut locals);
     res.unwrap()
 }
 

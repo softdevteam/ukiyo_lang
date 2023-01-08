@@ -39,19 +39,26 @@ params -> Result<Expr, ()>:
 
 func_def -> Result<Expr, ()>:
             "FUNC" "IDENTIFIER" "LBRACK" args_list "RBRACK" body {
-            Ok(Expr::FuncDef {  span: $span, name: map_err($2)?, args_list: $4?,
+            Ok(Expr::FuncDef {  span: $span, name: map_err($2)?, args_list: Box::new($4?),
                 body: Box::new($6?),}) 
             };
 
-args_list -> Result<Vec<Span>, ()>:
-            { Ok(vec![]) }
+args_list -> Result<Expr, ()>:
+            { Ok(Expr::ExprList(vec![])) }
           | args { $1 }
           ;
 
-args -> Result<Vec<Span>,  ()>:
-          "IDENTIFIER" { Ok(vec![map_err($1)?]) }
-        | args "COMMA" "IDENTIFIER" { flattenr_span($1, $3) }
-        ;
+args -> Result<Expr,  ()>:
+          "IDENTIFIER" { Ok(Expr::ExprList(vec![Expr::VarLookup(map_err($1)?)])) }
+        | args "COMMA" "IDENTIFIER" { 
+            let mut v = match $1? {
+                Expr::ExprList(v) => v,
+                _ => return Err(()),
+            };
+            v.push(Expr::VarLookup(map_err($3)?));
+            Ok(Expr::ExprList(v))
+          }
+       ;
         
 if_statement -> Result<Expr, ()>:
                 "IF" binary_expression body {

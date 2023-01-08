@@ -1,3 +1,4 @@
+use std::fmt;
 use crate::config_ast::{ self };
 use lrlex::DefaultLexeme;
 use lrpar::{ NonStreamingLexer };
@@ -18,9 +19,31 @@ pub enum OpCode {
     Jump(usize),
     JumpIfFalse(usize),
     Return,
-    DefineFunc(String, Vec<OpCode>),
+    DefineFunc(String, Vec<OpCode>, Vec<OpCode>),
 }
 
+impl fmt::Display for OpCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            OpCode::PushInt(i) => write!(f, "PushInt({})", i),
+            OpCode::PushStr(s) => write!(f, "PushStr({})", s),
+            OpCode::Plus => write!(f, "Plus"),
+            OpCode::Minus => write!(f, "Minus"),
+            OpCode::Eqeq => write!(f, "Eqeq"),
+            OpCode::Lteq => write!(f, "Lteq"),
+            OpCode::Lt => write!(f, "Lt"),
+            OpCode::StoreVar(i) => write!(f, "StoreVar({})", i),
+            OpCode::LoadVar(i) => write!(f, "LoadVar({})", i),
+            OpCode::Call(s) => write!(f, "Call({})", s),
+            OpCode::Call(s) => write!(f, "Call({}, None)", s),
+            OpCode::Jump(i) => write!(f, "Jump({})", i),
+            OpCode::JumpIfFalse(i) => write!(f, "JumpIfFalse({})", i),
+            OpCode::Return => write!(f, "Return"),
+            OpCode::DefineFunc(s, ops1, ops2) =>
+                write!(f, "DefineFunc({}, {:?}, {:?})", s, ops1, ops2),
+        }
+    }
+}
 pub fn compiler(
     ast: Ast,
     lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>
@@ -205,16 +228,24 @@ fn compiler_expr(
             let mut res = Vec::new();
             let mut new_locals = Vec::new();
             let mut func_body = Vec::new();
+            let args = match args_list.as_ref() {
+                config_ast::Expr::ExprList(v) => v,
+                _ => panic!("Expected ExprList for args_list"),
+            };
 
-            for arg in args_list.iter() {
-                let idx_str = lexer.span_str(*arg).to_string();
-                new_locals.push(idx_str);
+            let arg_names = compiler_expr(&*args_list, lexer, locals, bc);
+            for arg in args {
+                if let config_ast::Expr::VarLookup(id) = arg {
+                    new_locals.push(lexer.span_str(*id).to_string());
+                } else {
+                    panic!("Expected VarLookup for arg");
+                }
             }
             let body = compiler_expr(body, lexer, &mut new_locals, bc);
 
             func_body.extend(body);
             let func_name = lexer.span_str(*name).to_string();
-            res.push(OpCode::DefineFunc(func_name.clone(), func_body));
+            res.push(OpCode::DefineFunc(func_name.clone(), arg_names, func_body));
             res
         }
 
@@ -222,7 +253,7 @@ fn compiler_expr(
             let mut res = Vec::new();
             let params = &*params;
             let val = compiler_expr(&params, lexer, locals, bc);
-            res.extend(val);
+            res.extend(val.clone());
             let func_name = lexer.span_str(*name).to_string();
             res.push(OpCode::Call(func_name));
             res
