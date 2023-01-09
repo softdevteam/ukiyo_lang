@@ -1,7 +1,7 @@
-use std::fmt;
-use crate::config_ast::{ self };
+use crate::config_ast::{self};
 use lrlex::DefaultLexeme;
-use lrpar::{ NonStreamingLexer };
+use lrpar::NonStreamingLexer;
+use std::fmt;
 pub type Ast = Vec<config_ast::Expr>;
 const MAXD: usize = usize::max_value();
 #[derive(Debug, Clone)]
@@ -39,14 +39,15 @@ impl fmt::Display for OpCode {
             OpCode::Jump(i) => write!(f, "Jump({})", i),
             OpCode::JumpIfFalse(i) => write!(f, "JumpIfFalse({})", i),
             OpCode::Return => write!(f, "Return"),
-            OpCode::DefineFunc(s, ops1, ops2) =>
-                write!(f, "DefineFunc({}, {:?}, {:?})", s, ops1, ops2),
+            OpCode::DefineFunc(s, ops1, ops2) => {
+                write!(f, "DefineFunc({}, {:?}, {:?})", s, ops1, ops2)
+            }
         }
     }
 }
 pub fn compiler(
     ast: Ast,
-    lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>
+    lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,
 ) -> Result<Vec<OpCode>, String> {
     if ast.is_empty() {
         return Ok(Vec::new());
@@ -66,10 +67,14 @@ fn compiler_expr(
     node: &config_ast::Expr,
     lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,
     locals: &mut Vec<String>,
-    bc: &Vec<OpCode>
+    bc: &Vec<OpCode>,
 ) -> Vec<OpCode> {
     match node {
-        config_ast::Expr::Int { span: _, is_negative, val } => {
+        config_ast::Expr::Int {
+            span: _,
+            is_negative,
+            val,
+        } => {
             let mut tmp = lexer.span_str(*val).parse().unwrap();
             let mut res = Vec::new();
             if *is_negative {
@@ -111,7 +116,11 @@ fn compiler_expr(
             res.push(OpCode::PushStr(new_s));
             res
         }
-        config_ast::Expr::Assign { span: _, ref id, ref expr } => {
+        config_ast::Expr::Assign {
+            span: _,
+            ref id,
+            ref expr,
+        } => {
             let mut res = Vec::new();
             let val = compiler_expr(&expr, lexer, locals, bc);
             let idx_str = lexer.span_str(*id).to_string();
@@ -136,7 +145,12 @@ fn compiler_expr(
             res.push(OpCode::Call(label));
             res
         }
-        config_ast::Expr::BinaryOp { span: _, op, lhs, rhs } => {
+        config_ast::Expr::BinaryOp {
+            span: _,
+            op,
+            lhs,
+            rhs,
+        } => {
             let lhs = compiler_expr(lhs, lexer, locals, bc);
             let rhs = compiler_expr(rhs, lexer, locals, bc);
             let _op = lexer.span_str(*op);
@@ -191,7 +205,11 @@ fn compiler_expr(
             res.push(OpCode::LoadVar(index));
             res
         }
-        config_ast::Expr::WhileLoop { span: _, condition, body } => {
+        config_ast::Expr::WhileLoop {
+            span: _,
+            condition,
+            body,
+        } => {
             let mut res = Vec::new();
             let loop_entry = bc.len();
 
@@ -208,7 +226,11 @@ fn compiler_expr(
             res.push(OpCode::JumpIfFalse(exit_call));
             res
         }
-        config_ast::Expr::IfStatement { span: _, condition, body } => {
+        config_ast::Expr::IfStatement {
+            span: _,
+            condition,
+            body,
+        } => {
             let mut res = Vec::new();
             let cond = compiler_expr(condition, lexer, locals, bc);
             res.extend(cond);
@@ -224,7 +246,12 @@ fn compiler_expr(
             }
             res
         }
-        config_ast::Expr::FuncDef { span: _, name, args_list, body } => {
+        config_ast::Expr::FuncDef {
+            span: _,
+            name,
+            args_list,
+            body,
+        } => {
             let mut res = Vec::new();
             let mut new_locals = Vec::new();
             let mut func_body = Vec::new();
@@ -249,7 +276,11 @@ fn compiler_expr(
             res
         }
 
-        config_ast::Expr::Call { span: _, name, params } => {
+        config_ast::Expr::Call {
+            span: _,
+            name,
+            params,
+        } => {
             let mut res = Vec::new();
             let params = &*params;
             let val = compiler_expr(&params, lexer, locals, bc);

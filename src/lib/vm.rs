@@ -1,4 +1,4 @@
-use crate::compiler::{ compiler, Ast, OpCode };
+use crate::compiler::{compiler, Ast, OpCode};
 use core::panic;
 use lrlex::DefaultLexeme;
 use lrpar::NonStreamingLexer;
@@ -38,7 +38,7 @@ impl fmt::Display for Types {
 fn vm(
     prog: Vec<OpCode>,
     locals: &mut Vec<Types>,
-    functions: &mut Vec<Function>
+    functions: &mut Vec<Function>,
 ) -> Result<Vec<Types>, String> {
     if prog.is_empty() {
         return Err("Cannot execute empty program".to_string());
