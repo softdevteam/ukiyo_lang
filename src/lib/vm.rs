@@ -35,7 +35,11 @@ impl fmt::Display for Types {
     }
 }
 
-fn vm(prog: Vec<OpCode>, locals: &mut Vec<Types>) -> Result<Vec<Types>, String> {
+fn vm(
+    prog: Vec<OpCode>,
+    locals: &mut Vec<Types>,
+    functions: &mut Vec<Function>
+) -> Result<Vec<Types>, String> {
     if prog.is_empty() {
         return Err("Cannot execute empty program".to_string());
     }
@@ -43,7 +47,7 @@ fn vm(prog: Vec<OpCode>, locals: &mut Vec<Types>) -> Result<Vec<Types>, String> 
     let mut stack: Vec<Types> = Vec::new();
     //initialize with exact size for locals.
     //let mut locals: Vec<Types> = Vec::new();
-    let mut functions: Vec<Function> = Vec::new();
+    //let mut functions: Vec<Function> = Vec::new();
     while pc < prog.len() {
         let expr = &prog[pc];
         match &*expr {
@@ -96,28 +100,16 @@ fn vm(prog: Vec<OpCode>, locals: &mut Vec<Types>) -> Result<Vec<Types>, String> 
                     if let Some(func) = func {
                         //to pass args in local
                         let mut arg_values = Vec::new();
-                        if let arg_vec = &func.args {
-                            for arg in arg_vec {
-                                //println!("arg is {}  and {:?}", arg, arg);
-                                let val = match arg {
-                                    OpCode::PushInt(x) => Types::Int(*x),
-                                    OpCode::PushStr(x) => Types::String(x.clone()),
-                                    OpCode::LoadVar(x) => {
-                                        let val = locals[*x].clone();
-                                        stack.push(val.clone());
-                                        val
-                                    }
-                                    _ => {
-                                        return Err(
-                                            "Invalid argument type for function".to_string()
-                                        );
-                                    }
-                                };
-                                arg_values.push(val);
-                            }
+                        //just iterate indexes?
+                        for arg in &func.args {
+                            let val = stack.pop().unwrap();
+                            arg_values.push(val);
                         }
-                        let res = vm(func.prog.clone(), &mut arg_values)?;
-                        stack.extend(res);
+
+                        arg_values.reverse();
+                        // execute the function
+                        let result = vm(func.prog.clone(), &mut arg_values, functions)?;
+                        stack.extend(result);
                     } else {
                         return Err(format!("Function '{}' not found", label));
                     }
@@ -218,8 +210,9 @@ pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> 
     let prog = compiler(ast, lexer);
     dbg!(&prog);
     //panic!();
-    let mut locals: Vec<Types> = Vec::new();
-    let res = vm(prog.unwrap(), &mut locals);
+    let mut locals = Vec::new();
+    let mut functions: Vec<Function> = Vec::new();
+    let res = vm(prog.unwrap(), &mut locals, &mut functions);
     res.unwrap()
 }
 
