@@ -26,7 +26,7 @@ param_list -> Result<Expr, ()>:
         ;
 
 params -> Result<Expr, ()>:
-         binary_expression { Ok(Expr::ExprList(vec![$1?])) }
+         binary_expression {Ok(Expr::ExprList(vec![$1?])) }
         | params "COMMA" binary_expression { 
             let mut v = match $1? {
                 Expr::ExprList(v) => v,
@@ -39,24 +39,19 @@ params -> Result<Expr, ()>:
 
 func_def -> Result<Expr, ()>:
             "FUNC" "IDENTIFIER" "LBRACK" args_list "RBRACK" body {
-            Ok(Expr::FuncDef {  span: $span, name: map_err($2)?, args_list: Box::new($4?),
+            Ok(Expr::FuncDef {  span: $span, name: map_err($2)?, args_list: $4?,
                 body: Box::new($6?),}) 
             };
 
-args_list -> Result<Expr, ()>:
-            { Ok(Expr::ExprList(vec![])) }
+args_list -> Result<Vec<Span>, ()>:
+            { Ok(vec![]) }
           | args { $1 }
           ;
 
-args -> Result<Expr,  ()>:
-          "IDENTIFIER" { Ok(Expr::ExprList(vec![Expr::VarLookup(map_err($1)?)])) }
+args -> Result<Vec<Span>, ()>:
+          "IDENTIFIER" { Ok(vec![map_err($1)?]) }
         | args "COMMA" "IDENTIFIER" { 
-            let mut v = match $1? {
-                Expr::ExprList(v) => v,
-                _ => return Err(()),
-            };
-            v.push(Expr::VarLookup(map_err($3)?));
-            Ok(Expr::ExprList(v))
+            flattenr_span($1, $3)
           }
        ;
         
@@ -121,6 +116,7 @@ use lrlex::DefaultLexeme;
 use lrpar::Span;
 
 type StorageT = u32;
+
 
 fn map_err(r: Result<DefaultLexeme<StorageT>, DefaultLexeme<StorageT>>)
     -> Result<Span, ()>
