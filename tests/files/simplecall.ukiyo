@@ -1,0 +1,10 @@
+// Run-time:
+//   stdout:
+//     hello
+//     ...
+
+func call() {
+	print("hello");
+}
+
+call();

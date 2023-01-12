@@ -20,3 +20,11 @@ lrpar = "0.12"
 cfgrammar = "0.12"
 lrlex = "0.12"
 lrpar = "0.12"
+
+[[test]]
+name = "tests"
+path = "tests/langtest.rs"
+harness = false
+
+[dev-dependencies]
+lang_tester = "0.7.1"
