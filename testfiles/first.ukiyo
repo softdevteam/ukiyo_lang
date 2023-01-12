@@ -1,1 +1,14 @@
-let x = 6; let y = 10; func hello(x, y) { print(x+y); } func call() {let x = 5; let y = 3; hello(x, y); } call();
+let x = 6;
+let y = 10;
+
+func hello(x, y) {
+	print(x+y);
+}
+
+func call() {
+	let x = 5;
+	let y = 3;
+	hello(x, y);
+}
+
+call();
