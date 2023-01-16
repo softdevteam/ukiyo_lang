@@ -1,4 +1,4 @@
-use std::{fs::read_to_string, path::PathBuf, process::Command};
+use std::{fs::read_to_string, process::Command};
 
 use lang_tester::LangTester;
 
