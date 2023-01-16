@@ -2,7 +2,6 @@ use lrpar::Span;
 
 #[derive(Debug, Clone)]
 pub enum Expr {
-    ExprList(Vec<Expr>),
     Prog {
         span: Span,
         stmts: Vec<Expr>,
@@ -48,14 +47,13 @@ pub enum Expr {
     Call {
         span: Span,
         name: Span,
-        params: Box<Expr>,
+        params: Vec<Expr>,
     },
 }
 
 impl Expr {
     pub fn span(&self) -> Span {
         match self {
-            Expr::ExprList(v) => v[0].span(),
             Expr::Assign { span, .. } => *span,
             Expr::String(span) => *span,
             Expr::BinaryOp { span, .. } => *span,

@@ -227,34 +227,31 @@ fn compiler_expr(
         config_ast::Expr::FuncDef { span: _, name, args_list, body } => {
             let mut res = Vec::new();
             let mut new_locals = Vec::new();
+            let mut args = Vec::new();
             let mut func_body = Vec::new();
+            let func_name = lexer.span_str(*name).to_string();
 
             for arg in args_list {
                 let val = lexer.span_str(*arg).to_string();
                 new_locals.push(val);
             }
+            args.extend(new_locals.clone());
             let body = compiler_expr(body, lexer, &mut new_locals, bc);
-
             func_body.extend(body);
-            let func_name = lexer.span_str(*name).to_string();
-            res.push(OpCode::DefineFunc(func_name.clone(), new_locals, func_body));
+
+            res.push(OpCode::DefineFunc(func_name.clone(), args, func_body));
             res
         }
 
         config_ast::Expr::Call { span: _, name, params } => {
             let mut res = Vec::new();
-            let params = &*params;
-            let val = compiler_expr(&params, lexer, locals, bc);
-            res.extend(val.clone());
+
+            for param in params {
+                let val = compiler_expr(param, lexer, locals, bc);
+                res.extend(val);
+            }
             let func_name = lexer.span_str(*name).to_string();
             res.push(OpCode::Call(func_name));
-            res
-        }
-        config_ast::Expr::ExprList(exprs) => {
-            let mut res = Vec::new();
-            for expr in exprs {
-                res.extend(compiler_expr(expr, lexer, locals, bc));
-            }
             res
         }
     }

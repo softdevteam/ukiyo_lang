@@ -12,29 +12,25 @@ statement -> Result<Expr, ()>:
           | while_loop { $1 }
           | if_statement { $1 }
           | func_def { $1 }
-          | func_call "SEMICOLON" { $1 }
           ;
 
 func_call -> Result<Expr, ()>:
             "IDENTIFIER" "LBRACK" param_list "RBRACK" {
-              Ok(Expr::Call { span: $span, name: map_err($1)?, params: Box::new($3?)})
+              Ok(Expr::Call { span: $span, name: map_err($1)?, params: $3?})
             };
 
-param_list -> Result<Expr, ()>:
-          { Ok(Expr::ExprList(vec![])) }
-        | params { $1 }
-        ;
-
-params -> Result<Expr, ()>:
-         binary_expression {Ok(Expr::ExprList(vec![$1?])) }
-        | params "COMMA" binary_expression { 
-            let mut v = match $1? {
-                Expr::ExprList(v) => v,
-                _ => return Err(()),
-            };
+param_list -> Result<Vec<Expr>, ()>:
+          { Ok(vec![]) }
+        | binary_expression { Ok(vec![$1?]) }
+        | param_list "COMMA" binary_expression { 
+            let mut v = $1?;
             v.push($3?);
-            Ok(Expr::ExprList(v))
+            Ok(v)
           }
+       ;
+
+params -> Result<Vec<Expr>, ()>:
+         param_list { $1 }
        ;
 
 func_def -> Result<Expr, ()>:
@@ -68,8 +64,6 @@ while_loop -> Result<Expr, ()>:
               "WHILE" "LBRACK" binary_expression "RBRACK"  body {
               Ok(Expr::WhileLoop { span: $span, condition: Box::new($3?), body: Box::new($5?)})
               };
-              
-
 
 body -> Result<Expr, ()>:
         "LBRACE" prog "RBRACE" { Ok(Expr::Prog { span: $span, stmts: $2?}) }
@@ -100,6 +94,7 @@ binary_expression -> Result<Expr, ()>:
 
 binary_term -> Result<Expr, ()>:
                unit { $1 }
+              | func_call { $1 }
                ;
 bin_op -> Result<Span, ()>: 
            "PLUS"  { Ok(map_err($1)?) }

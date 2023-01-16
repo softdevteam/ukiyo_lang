@@ -19,16 +19,6 @@ pub struct Function {
     pub prog: Vec<OpCode>,
 }
 
-impl Function {
-    fn new() -> Function {
-        Function {
-            args: Vec::new(),
-            prog: Vec::new(),
-            locals: Some(Vec::new()),
-            name: String::new(),
-        }
-    }
-}
 impl Types {
     fn pretty(&self) -> String {
         match *self {
@@ -109,9 +99,12 @@ fn vm(
                     // search for the user-defined function
                     let func = functions.iter().find(|f| f.name == *label);
                     if let Some(func) = func {
+                        for arg in func.args.iter() {
+                            let val = stack.pop().unwrap();
+                            locals.push(val);
+                        }
                         let result = vm(func.prog.clone(), locals, functions)?;
                         locals.extend(result.clone());
-                        //println!("result is: {:?}", result);
                         stack.extend(result);
                     } else {
                         return Err(format!("Function '{}' not found", label));
