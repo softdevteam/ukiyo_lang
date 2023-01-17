@@ -284,5 +284,12 @@ fn compiler_expr(
             res.push(OpCode::Call(func_name));
             res
         }
+
+        config_ast::Expr::Return { span: _, expr } => {
+            let mut res = Vec::new();
+            res.extend(compiler_expr(&*expr, lexer, locals, bc));
+            res.push(OpCode::Return);
+            res
+        }
     }
 }

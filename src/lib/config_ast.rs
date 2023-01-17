@@ -49,6 +49,10 @@ pub enum Expr {
         name: Span,
         params: Vec<Expr>,
     },
+    Return {
+        span: Span,
+        expr: Box<Expr>,
+    },
 }
 
 impl Expr {
@@ -65,6 +69,7 @@ impl Expr {
             Expr::Prog { span, .. } => *span,
             Expr::FuncDef { span, .. } => *span,
             Expr::Call { span, .. } => *span,
+            Expr::Return { span, .. } => *span,
         }
     }
 }
