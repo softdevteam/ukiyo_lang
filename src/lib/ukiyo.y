@@ -2,6 +2,7 @@
 %%
 prog -> Result<Vec<Expr>, ()>: 
             prog statement { flattenr($1, $2) }
+          | return_statement { Ok(vec![$1?]) }
           | statement { Ok(vec![$1?]) }
           ;
 
@@ -67,8 +68,13 @@ while_loop -> Result<Expr, ()>:
 
 body -> Result<Expr, ()>:
         "LBRACE" prog "RBRACE" { Ok(Expr::Prog { span: $span, stmts: $2?}) }
+      | return_statement { $1 }
         ;
-          
+
+return_statement -> Result<Expr, ()>:
+                      "RETURN" binary_expression "SEMICOLON" {
+                           Ok(Expr::Return { span: $span, expr: Box::new($2?)})
+                      };          
 
 assigment -> Result<Expr, ()>: 
           "LET" "IDENTIFIER" "EQ" binary_expression {  

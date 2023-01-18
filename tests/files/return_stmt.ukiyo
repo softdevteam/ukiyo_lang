@@ -1,0 +1,16 @@
+// Run-time:
+//   stdout:
+//     8
+//     ...
+
+func simple_return(x, y) {
+	return x+y;
+}
+
+func call() {
+	let x = 5;
+	let y = 3;
+    print(simple_return(x, y));
+}
+
+call();
