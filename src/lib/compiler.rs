@@ -115,7 +115,6 @@ fn compiler_expr(
         } => {
             compiler_expr(&expr, lexer, locals, bc);
             let idx_str = lexer.span_str(*id).to_string();
-
             match locals.iter().position(|x| x == &idx_str) {
                 Some(x) => bc.push(OpCode::StoreVar(x)),
                 None => {
