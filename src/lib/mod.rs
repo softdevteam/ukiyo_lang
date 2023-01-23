@@ -17,7 +17,7 @@ pub fn compile(contents: String) {
     }
     match res {
         Some(Ok(r)) => {
-            println!("{:?}", run(r, &lexer));
+            run(r, &lexer);
         }
         _ => eprintln!("Unable to evaluate expression."),
     }

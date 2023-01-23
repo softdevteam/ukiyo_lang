@@ -2,7 +2,6 @@
 %%
 prog -> Result<Vec<Expr>, ()>: 
             prog statement { flattenr($1, $2) }
-          | return_statement { Ok(vec![$1?]) }
           | statement { Ok(vec![$1?]) }
           ;
 
@@ -13,6 +12,7 @@ statement -> Result<Expr, ()>:
           | while_loop { $1 }
           | if_statement { $1 }
           | func_def { $1 }
+          | return_statement { $1 }
           ;
 
 func_call -> Result<Expr, ()>:
@@ -53,8 +53,8 @@ args -> Result<Vec<Span>, ()>:
        ;
         
 if_statement -> Result<Expr, ()>:
-                "IF" binary_expression body {
-                  Ok(Expr::IfStatement { span: $span, condition: Box::new($2?), body: Box::new($3?)})
+                "IF" "LBRACK" binary_expression "RBRACK"  body {
+                  Ok(Expr::IfStatement { span: $span, condition: Box::new($3?), body: Box::new($5?)})
                 };
 print_statement -> Result<Expr, ()>: 
                    "PRINT" "LBRACK" binary_expression "RBRACK" {  

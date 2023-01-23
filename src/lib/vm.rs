@@ -19,6 +19,17 @@ pub struct Function {
     pub prog: Vec<OpCode>,
 }
 
+impl Function {
+    pub fn new(name: String, args: Vec<String>, prog: Vec<OpCode>) -> Self {
+        Self {
+            name,
+            locals: None,
+            args,
+            prog,
+        }
+    }
+}
+
 impl Types {
     fn pretty(&self) -> String {
         match *self {
@@ -46,9 +57,7 @@ fn vm(
     }
     let mut pc = 0;
     let mut stack: Vec<Types> = Vec::new();
-    //initialize with exact size for locals.
-    //let mut locals: Vec<Types> = Vec::new();
-    //let mut functions: Vec<Function> = Vec::new();
+
     while pc < prog.len() {
         let expr = &prog[pc];
         match &*expr {
@@ -175,8 +184,6 @@ fn vm(
                 let val = stack.pop().unwrap();
 
                 if let Types::Bool(false) = val {
-                    //panic!();
-                    //assert!(*pos != usize::max_value());
                     pc = *pos;
                 } else {
                     pc += 1;
@@ -198,6 +205,9 @@ fn vm(
                 functions.push(func);
                 pc += 1;
             }
+            OpCode::Patch => {
+                unreachable!("Unabled to patch back value");
+            }
         }
     }
     Ok(stack)
@@ -205,8 +215,6 @@ fn vm(
 
 pub fn run(ast: Ast, lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>) -> Vec<Types> {
     let prog = compiler(ast, lexer);
-    dbg!(&prog);
-    //panic!();
     let mut locals = Vec::new();
     let mut functions: Vec<Function> = Vec::new();
     let res = vm(prog.unwrap(), &mut locals, &mut functions);
