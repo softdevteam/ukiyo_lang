@@ -1,9 +1,8 @@
 use crate::config_ast::{self};
 use lrlex::DefaultLexeme;
 use lrpar::NonStreamingLexer;
-use std::fmt;
+use std::fmt::{self};
 pub type Ast = Vec<config_ast::Expr>;
-const MAXD: usize = usize::max_value();
 #[derive(Debug, Clone)]
 pub enum OpCode {
     PushInt(i32),
@@ -20,6 +19,7 @@ pub enum OpCode {
     JumpIfFalse(usize),
     Return,
     DefineFunc(String, Vec<String>, Vec<OpCode>),
+    Patch,
 }
 
 impl fmt::Display for OpCode {
@@ -41,6 +41,7 @@ impl fmt::Display for OpCode {
             OpCode::DefineFunc(s, ops1, ops2) => {
                 write!(f, "DefineFunc({}, {:?}, {:?})", s, ops1, ops2)
             }
+            OpCode::Patch => write!(f, "Patch"),
         }
     }
 }
@@ -54,10 +55,8 @@ pub fn compiler(
 
     let mut bc = Vec::new();
     let mut locals: Vec<String> = Vec::new();
-
     for node in ast {
-        let val = compiler_expr(&node, lexer, &mut locals, &bc);
-        bc.extend(val);
+        compiler_expr(&node, lexer, &mut locals, &mut bc);
     }
     Ok(bc)
 }
@@ -66,8 +65,8 @@ fn compiler_expr(
     node: &config_ast::Expr,
     lexer: &dyn NonStreamingLexer<DefaultLexeme<u32>, u32>,
     locals: &mut Vec<String>,
-    bc: &Vec<OpCode>,
-) -> Vec<OpCode> {
+    bc: &mut Vec<OpCode>,
+) {
     match node {
         config_ast::Expr::Int {
             span: _,
@@ -75,15 +74,12 @@ fn compiler_expr(
             val,
         } => {
             let mut tmp = lexer.span_str(*val).parse().unwrap();
-            let mut res = Vec::new();
             if *is_negative {
                 tmp = -1 * tmp;
             }
-            res.push(OpCode::PushInt(tmp));
-            res
+            bc.push(OpCode::PushInt(tmp));
         }
         config_ast::Expr::String(span) => {
-            let mut res = Vec::new();
             let s_orig = lexer.span_str(*span);
             let mut new_s = String::new();
             // Start by ignoring the beginning quote.
@@ -109,40 +105,32 @@ fn compiler_expr(
                 new_s.push(c);
                 i += c.len_utf8();
             }
-            //SPLIT STRING AFTER TAKING THE MATCHING CLOSING `"`
-            // let val = lexer.span_str(*span).parse().unwrap();
 
-            res.push(OpCode::PushStr(new_s));
-            res
+            bc.push(OpCode::PushStr(new_s));
         }
         config_ast::Expr::Assign {
             span: _,
             ref id,
             ref expr,
         } => {
-            let mut res = Vec::new();
-            let val = compiler_expr(&expr, lexer, locals, bc);
+            compiler_expr(&expr, lexer, locals, bc);
             let idx_str = lexer.span_str(*id).to_string();
-            //println!("we now in assignment call for var: {}", idx_str);
-            res.extend(val);
+
             match locals.iter().position(|x| x == &idx_str) {
-                Some(x) => res.push(OpCode::StoreVar(x)),
+                Some(x) => bc.push(OpCode::StoreVar(x)),
                 None => {
                     locals.push(idx_str);
-                    res.push(OpCode::StoreVar(locals.len() - 1));
+                    bc.push(OpCode::StoreVar(locals.len() - 1));
                 }
             }
-            res
         }
         config_ast::Expr::Print { span: _, args } => {
-            let mut res = Vec::new();
             let label = "print".to_string();
 
             let args = &*args;
-            let val = compiler_expr(&args, lexer, locals, bc);
-            res.extend(val);
-            res.push(OpCode::Call(label));
-            res
+            compiler_expr(&args, lexer, locals, bc);
+
+            bc.push(OpCode::Call(label));
         }
         config_ast::Expr::BinaryOp {
             span: _,
@@ -150,50 +138,29 @@ fn compiler_expr(
             lhs,
             rhs,
         } => {
-            let lhs = compiler_expr(lhs, lexer, locals, bc);
-            let rhs = compiler_expr(rhs, lexer, locals, bc);
+            compiler_expr(lhs, lexer, locals, bc);
+            compiler_expr(rhs, lexer, locals, bc);
             let _op = lexer.span_str(*op);
             match _op {
                 "+" => {
-                    let mut res = Vec::new();
-                    res.extend(lhs);
-                    res.extend(rhs);
-                    res.push(OpCode::Plus);
-                    return res;
+                    bc.push(OpCode::Plus);
                 }
                 "-" => {
-                    let mut res = Vec::new();
-                    res.extend(lhs);
-                    res.extend(rhs);
-                    res.push(OpCode::Minus);
-                    return res;
+                    bc.push(OpCode::Minus);
                 }
                 "<" => {
-                    let mut res = Vec::new();
-                    res.extend(lhs);
-                    res.extend(rhs);
-                    res.push(OpCode::Lt);
-                    return res;
+                    bc.push(OpCode::Lt);
                 }
                 "<=" => {
-                    let mut res = Vec::new();
-                    res.extend(lhs);
-                    res.extend(rhs);
-                    res.push(OpCode::Lteq);
-                    return res;
+                    bc.push(OpCode::Lteq);
                 }
                 "==" => {
-                    let mut res = Vec::new();
-                    res.extend(lhs);
-                    res.extend(rhs);
-                    res.push(OpCode::Eqeq);
-                    return res;
+                    bc.push(OpCode::Eqeq);
                 }
                 &_ => todo!(),
             }
         }
         config_ast::Expr::VarLookup(ref id) => {
-            let mut res = Vec::new();
             let idx_str = lexer.span_str(*id).to_string();
             let index = match locals.iter().position(|x| x == &idx_str) {
                 Some(x) => x,
@@ -201,49 +168,39 @@ fn compiler_expr(
                     panic!("Variable doesn't exists");
                 }
             };
-            res.push(OpCode::LoadVar(index));
-            res
+            bc.push(OpCode::LoadVar(index));
         }
         config_ast::Expr::WhileLoop {
             span: _,
             condition,
             body,
         } => {
-            let mut res = Vec::new();
             let loop_entry = bc.len();
+            compiler_expr(condition, lexer, locals, bc);
+            bc.push(OpCode::Patch);
+            let exit = bc.len() - 1;
+            compiler_expr(body, lexer, locals, bc);
 
-            let cond = compiler_expr(condition, lexer, locals, bc);
-            res.extend(cond);
+            compiler_expr(condition, lexer, locals, bc);
+            bc.push(OpCode::Jump(loop_entry));
 
-            res.push(OpCode::JumpIfFalse(MAXD));
-            let exit_call = bc.len() + res.len() - 1;
-
-            let body = compiler_expr(body, lexer, locals, bc);
-            res.extend(body);
-
-            res.push(OpCode::Jump(loop_entry));
-            res.push(OpCode::JumpIfFalse(exit_call));
-            res
+            bc[exit] = OpCode::JumpIfFalse(bc.len());
         }
         config_ast::Expr::IfStatement {
             span: _,
             condition,
             body,
         } => {
-            let mut res = Vec::new();
-            let cond = compiler_expr(condition, lexer, locals, bc);
-            res.extend(cond);
-            res.push(OpCode::JumpIfFalse(MAXD));
-            let body = compiler_expr(body, lexer, locals, bc);
-            res.extend(body);
-            res
+            compiler_expr(condition, lexer, locals, bc);
+            bc.push(OpCode::Patch);
+            let exit = bc.len() - 1;
+            compiler_expr(body, lexer, locals, bc);
+            bc[exit] = OpCode::JumpIfFalse(bc.len());
         }
         config_ast::Expr::Prog { span: _, stmts } => {
-            let mut res = Vec::new();
             for stmt in stmts {
-                res.extend(compiler_expr(stmt, lexer, locals, bc));
+                compiler_expr(stmt, lexer, locals, bc);
             }
-            res
         }
         config_ast::Expr::FuncDef {
             span: _,
@@ -251,7 +208,6 @@ fn compiler_expr(
             args_list,
             body,
         } => {
-            let mut res = Vec::new();
             let mut new_locals = Vec::new();
             let mut args = Vec::new();
             let mut func_body = Vec::new();
@@ -262,11 +218,11 @@ fn compiler_expr(
                 new_locals.push(val);
             }
             args.extend(new_locals.clone());
-            let body = compiler_expr(body, lexer, &mut new_locals, bc);
-            func_body.extend(body);
+            bc.push(OpCode::Patch);
 
-            res.push(OpCode::DefineFunc(func_name.clone(), args, func_body));
-            res
+            let offset = bc.len() - 1;
+            compiler_expr(body, lexer, &mut new_locals, &mut func_body);
+            bc[offset] = OpCode::DefineFunc(func_name.clone(), args, func_body);
         }
 
         config_ast::Expr::Call {
@@ -274,22 +230,16 @@ fn compiler_expr(
             name,
             params,
         } => {
-            let mut res = Vec::new();
-
             for param in params {
-                let val = compiler_expr(param, lexer, locals, bc);
-                res.extend(val);
+                compiler_expr(param, lexer, locals, bc);
             }
             let func_name = lexer.span_str(*name).to_string();
-            res.push(OpCode::Call(func_name));
-            res
+            bc.push(OpCode::Call(func_name));
         }
 
         config_ast::Expr::Return { span: _, expr } => {
-            let mut res = Vec::new();
-            res.extend(compiler_expr(&*expr, lexer, locals, bc));
-            res.push(OpCode::Return);
-            res
+            compiler_expr(&*expr, lexer, locals, bc);
+            bc.push(OpCode::Return);
         }
     }
 }

@@ -1,0 +1,21 @@
+// Run-time:
+//   stdout:
+//     printing value of x
+//     4
+
+func while_test(y) {
+    while (y < 3) {
+        let y = y + 1;
+    }
+}
+func call() {
+    let x = 0;
+    while (x < 3) {
+        while_test(x);
+        let x = x + 1;
+    }
+    print("printing value of x"); 
+    print(x);
+}
+
+call();
