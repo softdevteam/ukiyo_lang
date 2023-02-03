@@ -1,0 +1,28 @@
+// Run-time:
+//   stdout:
+//      0
+//      1
+//      1
+//      2
+//      3
+//      5
+//      8
+//      13
+//      21
+//      34  
+
+func fib(n) {
+    if (n <= 1) {
+        return n;
+    }
+    return fib(n-1) + fib(n-2);
+}
+func call() {
+    let x = 0;
+    while (x < 10) {
+        print(fib(x));
+        let x = x + 1;
+    }
+}
+
+call();

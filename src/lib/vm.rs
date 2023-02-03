@@ -100,7 +100,6 @@ fn vm(
                             Types::String(x) => output.push_str(&x),
                             Types::NoneType => output.push_str("None"),
                         }
-                        stack.push(val_copy);
                     }
 
                     println!("{}", output);
@@ -108,12 +107,12 @@ fn vm(
                     // search for the user-defined function
                     let func = functions.iter().find(|f| f.name == *label);
                     if let Some(func) = func {
+                        let mut localsnew = Vec::new();
                         for arg in func.args.iter() {
                             let val = stack.pop().unwrap();
-                            locals.push(val);
+                            localsnew.push(val);
                         }
-                        let result = vm(func.prog.clone(), locals, functions)?;
-                        locals.extend(result.clone());
+                        let result = vm(func.prog.clone(), &mut localsnew, functions)?;
                         stack.extend(result);
                     } else {
                         return Err(format!("Function '{}' not found", label));

@@ -1,7 +1,7 @@
 // Run-time:
 //   stdout:
 //     printing value of x
-//     4
+//     3
 
 func while_test(y) {
     while (y < 3) {
