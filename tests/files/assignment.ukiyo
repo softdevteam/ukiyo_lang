@@ -1,0 +1,16 @@
+// Run-time:
+//   stdout:
+//     15
+
+func assign(a, b) {
+    return a + b;
+}
+
+func call() {
+    let a = 10;
+    let b = 5;
+    let x = assign(a, b);
+    print(x);
+}
+
+call();
