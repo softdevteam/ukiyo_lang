@@ -1,4 +1,4 @@
-use crate::compiler::{compiler, Ast, OpCode};
+use crate::compiler::{compiler, Ast, CallTarget, OpCode};
 use core::panic;
 use lrlex::DefaultLexeme;
 use lrpar::NonStreamingLexer;
@@ -9,21 +9,20 @@ pub enum Types {
     Int(i32),
     String(String),
     Bool(bool),
+    Function(Function),
     NoneType,
 }
 #[derive(Debug, Clone)]
 pub struct Function {
-    pub name: String,
-    pub locals: Option<Vec<Types>>,
+    pub name: Option<String>,
     pub args: Vec<String>,
     pub prog: Vec<OpCode>,
 }
 
 impl Function {
-    pub fn new(name: String, args: Vec<String>, prog: Vec<OpCode>) -> Self {
+    pub fn new(name: String, locals: Vec<Types>, args: Vec<String>, prog: Vec<OpCode>) -> Self {
         Self {
-            name,
-            locals: None,
+            name: Some(name),
             args,
             prog,
         }
@@ -36,6 +35,7 @@ impl Types {
             Types::Int(ref x) => x.to_string(),
             Types::Bool(ref x) => x.to_string(),
             Types::String(ref x) => x.to_string(),
+            Types::Function(ref x) => todo!(),
             Types::NoneType => "None".to_string(),
         }
     }
@@ -72,12 +72,20 @@ fn vm(
             //how to optimize this function?
             OpCode::StoreVar(ref idx) => {
                 //change here to handle default cases foe each type
-                let val = stack.pop().unwrap_or_else(|| Types::Int(0));
                 let len = locals.len();
-                if *idx < len {
-                    locals[*idx] = val;
-                } else {
-                    locals.push(val);
+                if let Some(val) = stack.pop() {
+                    let cval = val.to_owned();
+                    match val {
+                        Types::Int(_) | Types::String(_) | Types::Function(_) => {
+                            if *idx < len {
+                                locals[*idx] = cval;
+                            } else {
+                                locals.push(cval);
+                            }
+                        }
+                        Types::Bool(_) => todo!(),
+                        Types::NoneType => panic!("type not implemented yet!"),
+                    }
                 }
                 pc += 1;
             }
@@ -86,36 +94,65 @@ fn vm(
                 stack.push(val);
                 pc += 1;
             }
-            OpCode::Call(label) => {
-                // check if the function is a built-in function
-                if label == "print" {
-                    // execute the built-in function
-                    let mut output = String::new();
-
-                    if let Some(val) = stack.pop() {
-                        let val_copy = val.to_owned();
-                        match val {
-                            Types::Int(x) => output.push_str(&x.to_string()),
-                            Types::Bool(x) => output.push_str(&x.to_string()),
-                            Types::String(x) => output.push_str(&x),
-                            Types::NoneType => output.push_str("None"),
+            OpCode::Call(ct) => {
+                match ct {
+                    CallTarget::Func(label, args_len) => {
+                        if let Some(index) =
+                            functions.iter().position(|f| f.name == Some(label.clone()))
+                        {
+                            let mut func = &functions[index];
+                            if *args_len != func.args.len() {
+                                println!("Error: Incorrect number of arguments. '{}' expects {} arguments, but {} were provided.", label, func.args.len(), args_len);
+                                panic!();
+                            }
+                            let mut localsnew = Vec::new();
+                            for _ in 0..func.args.len() {
+                                let val = stack.pop().unwrap();
+                                localsnew.push(val);
+                            }
+                            let result = vm(func.prog.clone(), &mut localsnew, functions)?;
+                            stack.extend(result);
+                        } else {
+                            return Err(format!("Function '{}' not found", label));
                         }
                     }
 
-                    println!("{}", output);
-                } else {
-                    // search for the user-defined function
-                    let func = functions.iter().find(|f| f.name == *label);
-                    if let Some(func) = func {
-                        let mut localsnew = Vec::new();
-                        for arg in func.args.iter() {
-                            let val = stack.pop().unwrap();
-                            localsnew.push(val);
+                    CallTarget::Var(index, args_len) => {
+                        let func_value = locals.get_mut(*index).unwrap();
+                        if let Types::Function(func) = func_value {
+                            let func_prog = func.prog.clone();
+                            if *args_len != func.args.len() {
+                                println!("Error: Incorrect number of arguments. Expected {} arguments, but {} were provided.", func.args.len(), args_len);
+                                panic!();
+                            }
+                            let mut localsnew = Vec::new();
+                            for _ in 0..func.args.len() {
+                                let val = stack.pop().unwrap();
+                                localsnew.push(val);
+                            }
+                            let result = vm(func_prog, &mut localsnew, functions)?;
+                            stack.extend(result);
                         }
-                        let result = vm(func.prog.clone(), &mut localsnew, functions)?;
-                        stack.extend(result);
-                    } else {
-                        return Err(format!("Function '{}' not found", label));
+                    }
+                    CallTarget::Builtins(label) => {
+                        if label == "print" {
+                            // execute the built-in function
+                            let mut output = String::new();
+
+                            if let Some(val) = stack.pop() {
+                                match val {
+                                    Types::Int(x) => output.push_str(&x.to_string()),
+                                    Types::Bool(x) => output.push_str(&x.to_string()),
+                                    Types::String(x) => output.push_str(&x),
+                                    Types::Function(x) => {
+                                        panic!("Doesn't support function parsing in print.")
+                                    }
+                                    Types::NoneType => output.push_str("None"),
+                                }
+                            }
+
+                            println!("{}", output);
+                        }
                     }
                 }
                 pc += 1;
@@ -192,14 +229,25 @@ fn vm(
             OpCode::Return => {
                 return Ok(stack);
             }
-
-            OpCode::DefineFunc(name, args, func_prog) => {
-                // Define a new function in the VM
+            OpCode::InlineFunc(args, func_prog, locals) => {
                 let func = Function {
-                    name: name.to_string(),
+                    name: None,
                     args: args.to_vec(),
                     prog: func_prog.to_vec(),
-                    locals: None,
+                };
+                stack.push(Types::Function(func));
+                pc += 1;
+            }
+            OpCode::DefineFunc(name, args, func_prog, locals) => {
+                let mut func_locals = Vec::new();
+                for local in locals.iter() {
+                    func_locals.push(Types::String(local.clone()));
+                }
+                // Define a new function in the VM
+                let func = Function {
+                    name: Some(name.to_string()),
+                    args: args.to_vec(),
+                    prog: func_prog.to_vec(),
                 };
                 functions.push(func);
                 pc += 1;

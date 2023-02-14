@@ -1,0 +1,14 @@
+// Run-time:
+//   stdout:
+//     3
+//
+
+func foo() {
+    let a = 1; let b = 2;
+    let fn = func(a, b) {
+        return a + b;
+    };
+    let x = fn(a, b);
+    print(x);
+}
+foo();
