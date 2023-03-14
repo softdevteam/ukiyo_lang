@@ -3,6 +3,13 @@ use lrlex::DefaultLexeme;
 use lrpar::NonStreamingLexer;
 use std::fmt::{self};
 pub type Ast = Vec<config_ast::Expr>;
+
+#[derive(Debug, Clone)]
+pub enum CallTarget {
+    Func(String, usize),
+    Var(usize, usize),
+    Builtins(String),
+}
 #[derive(Debug, Clone)]
 pub enum OpCode {
     PushInt(i32),
@@ -14,11 +21,12 @@ pub enum OpCode {
     Lt,
     StoreVar(usize),
     LoadVar(usize),
-    Call(String),
+    Call(CallTarget),
     Jump(usize),
     JumpIfFalse(usize),
     Return,
-    DefineFunc(String, Vec<String>, Vec<OpCode>),
+    DefineFunc(String, Vec<String>, Vec<OpCode>, Vec<String>),
+    InlineFunc(Vec<String>, Vec<OpCode>, Vec<String>),
     Patch,
 }
 
@@ -34,14 +42,15 @@ impl fmt::Display for OpCode {
             OpCode::Lt => write!(f, "Lt"),
             OpCode::StoreVar(i) => write!(f, "StoreVar({})", i),
             OpCode::LoadVar(i) => write!(f, "LoadVar({})", i),
-            OpCode::Call(s) => write!(f, "Call({})", s),
+            OpCode::Call(s) => write!(f, "Call({:?})", s),
             OpCode::Jump(i) => write!(f, "Jump({})", i),
             OpCode::JumpIfFalse(i) => write!(f, "JumpIfFalse({})", i),
             OpCode::Return => write!(f, "Return"),
-            OpCode::DefineFunc(s, ops1, ops2) => {
-                write!(f, "DefineFunc({}, {:?}, {:?})", s, ops1, ops2)
+            OpCode::DefineFunc(s, ops1, ops2, ops3) => {
+                write!(f, "DefineFunc({}, {:?}, {:?}, {:?})", s, ops1, ops2, ops3)
             }
             OpCode::Patch => write!(f, "Patch"),
+            OpCode::InlineFunc(_, _, _) => todo!(),
         }
     }
 }
@@ -129,7 +138,7 @@ fn compiler_expr(
             let args = &*args;
             compiler_expr(&args, lexer, locals, bc);
 
-            bc.push(OpCode::Call(label));
+            bc.push(OpCode::Call(CallTarget::Builtins(label)));
         }
         config_ast::Expr::BinaryOp {
             span: _,
@@ -210,8 +219,7 @@ fn compiler_expr(
             let mut new_locals = Vec::new();
             let mut args = Vec::new();
             let mut func_body = Vec::new();
-            let func_name = lexer.span_str(*name).to_string();
-
+            let func_name = name.map_or("".to_string(), |n| lexer.span_str(n).to_string());
             for arg in args_list {
                 let val = lexer.span_str(*arg).to_string();
                 new_locals.push(val);
@@ -221,7 +229,12 @@ fn compiler_expr(
 
             let offset = bc.len() - 1;
             compiler_expr(body, lexer, &mut new_locals, &mut func_body);
-            bc[offset] = OpCode::DefineFunc(func_name.clone(), args, func_body);
+
+            if func_name.is_empty() {
+                bc[offset] = OpCode::InlineFunc(args, func_body, new_locals);
+            } else {
+                bc[offset] = OpCode::DefineFunc(func_name.clone(), args, func_body, new_locals);
+            }
         }
 
         config_ast::Expr::Call {
@@ -232,8 +245,15 @@ fn compiler_expr(
             for param in params {
                 compiler_expr(param, lexer, locals, bc);
             }
+            let params_len = params.len();
             let func_name = lexer.span_str(*name).to_string();
-            bc.push(OpCode::Call(func_name));
+            let index = locals.iter().position(|x| x == &func_name);
+            let func_name = lexer.span_str(*name).to_string();
+            if let Some(index) = locals.iter().position(|x| x == &func_name) {
+                bc.push(OpCode::Call(CallTarget::Var(index, params_len)));
+            } else {
+                bc.push(OpCode::Call(CallTarget::Func(func_name, params_len)));
+            }
         }
 
         config_ast::Expr::Return { span: _, expr } => {

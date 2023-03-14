@@ -1,0 +1,17 @@
+// Run-time:
+//   stdout:
+//     2
+//
+
+func foo() {
+    return func (a, b) {
+        return a + b;
+    }
+}
+
+func main() {
+    let f = foo();
+    print(f(5,-3));
+}
+
+main();

@@ -12,6 +12,7 @@ statement -> Result<Expr, ()>:
           | while_loop { $1 }
           | if_statement { $1 }
           | func_def { $1 }
+          | anon_func { $1 }
           | return_statement { $1 }
           ;
 
@@ -32,12 +33,17 @@ param_list -> Result<Vec<Expr>, ()>:
 
 params -> Result<Vec<Expr>, ()>:
          param_list { $1 }
-       ;
-
+       ;           
 func_def -> Result<Expr, ()>:
             "FUNC" "IDENTIFIER" "LBRACK" args_list "RBRACK" body {
-            Ok(Expr::FuncDef {  span: $span, name: map_err($2)?, args_list: $4?,
+            Ok(Expr::FuncDef {  span: $span, name: Some(map_err($2)?), args_list: $4?,
                 body: Box::new($6?),}) 
+            };
+
+anon_func -> Result<Expr, ()>:
+            "FUNC" "LBRACK" args_list "RBRACK" body {
+            Ok(Expr::FuncDef { span: $span, name: None, args_list: $3?,
+                body: Box::new($5?),})
             };
 
 args_list -> Result<Vec<Span>, ()>:
@@ -73,13 +79,18 @@ body -> Result<Expr, ()>:
 
 return_statement -> Result<Expr, ()>:
                       "RETURN" binary_expression "SEMICOLON" {
-                           Ok(Expr::Return { span: $span, expr: Box::new($2?)})
-                      };          
+                           Ok(Expr::Return { span: $span, expr: Box::new($2?)}) }
+                    | "RETURN" anon_func {
+                           Ok(Expr::Return { span: $span, expr: Box::new($2?)}) };
 
 assigment -> Result<Expr, ()>: 
-          "LET" "IDENTIFIER" "EQ" binary_expression {  
+          "LET" "IDENTIFIER" "EQ" binary_expression {
             Ok(Expr::Assign { span: $span, id: map_err($2)?, expr: Box::new($4?)})
-            };
+          }
+        | "LET" "IDENTIFIER" "EQ" anon_func {
+            Ok(Expr::Assign { span: $span, id: map_err($2)?, expr: Box::new($4?)})
+          }
+        ;
 
 unit -> Result<Expr, ()>:
         literal { $1 }
@@ -101,7 +112,7 @@ binary_expression -> Result<Expr, ()>:
 binary_term -> Result<Expr, ()>:
                unit { $1 }
               | func_call { $1 }
-               ;
+              ;
 bin_op -> Result<Span, ()>: 
            "PLUS"  { Ok(map_err($1)?) }
         | "MINUS" { Ok(map_err($1)?) }
